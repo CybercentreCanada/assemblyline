@@ -1,0 +1,177 @@
+
+name: build
+
+trigger:
+  tags:
+    include: ["v*"]
+pr: none
+
+pool:
+  vmImage: "ubuntu-20.04"
+
+resources:
+  containers:
+    - container: redis
+      image: redis
+      ports:
+        - 6379:6379
+    - container: elasticsearch
+      image: cccs/elasticsearch:7.8.0
+      env:
+        ES_JAVA_OPTS: "-Xms256m -Xmx512m"
+        DISCOVERY_TYPE: "single-node"
+      ports:
+        - 9200:9200
+    - container: minio
+      image: cccs/minio
+      env:
+        MINIO_ACCESS_KEY: al_storage_key
+        MINIO_SECRET_KEY: Ch@ngeTh!sPa33w0rd
+      ports:
+        - 9000:9000
+
+stages:
+  - stage: build
+    jobs:
+      - job: build-python
+        displayName: Build Python Packages
+        steps:
+          - task: UsePythonVersion@0
+            displayName: Set python version
+            inputs:
+              versionSpec: 3.9
+          - script: |
+              set -x  # Echo commands before they are run
+
+              # Figure out what the build kind is
+              export VERSION=${BUILD_SOURCEBRANCH#"refs/tags/v"}
+              export COMMIT=`git rev-parse --verify ${BUILD_SOURCEBRANCH}`
+              export BRANCH=`git ls-remote --heads origin | grep $COMMIT | sed "s/.*\///"`
+              echo "Building $VERSION On branch $BRANCH"
+              if [[ "$VERSION" == *stable* ]] && [[ $BRANCH != "master" ]]; then exit 1; fi
+              if [[ "$VERSION" == *dev* ]] && [[ $BRANCH != "dev" ]]; then exit 1; fi
+              export VERSION=${VERSION/stable}
+              export VERSION=${VERSION/beta/b}
+
+              # make sure we are on the right branches for all other repos
+              git submodule foreach git checkout $BRANCH
+              sudo env "PATH=$PATH" python -m pip install --no-cache-dir -U wheel cython pip
+
+              # Build base
+              cd assemblyline-base
+              echo $VERSION > assemblyline/VERSION
+              python setup.py sdist --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/
+
+              # Build core
+              cd ../assemblyline-core
+              echo $VERSION > assemblyline_core/VERSION
+              python setup.py sdist --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/
+
+              # Build ui
+              cd ../assemblyline-ui
+              echo $VERSION > assemblyline_ui/VERSION
+              python setup.py bdist_wheel --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/
+
+          - publish: $(System.DefaultWorkingDirectory)/dist/
+            artifact: dist
+
+      - jobs: build-base
+        dependsOn: build-python
+        displayName: Build Base Image
+        steps:
+          - download: current
+            artifact: dist
+          - script: |
+              set -xv  # Echo commands before they are run
+              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
+              if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
+              export VERSION=${TAG/stable}
+              export VERSION=${VERSION/beta/b}
+              export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
+
+              cd assemblyline-base
+              ls -s dist ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/
+
+              export IMAGE=cccstemp.azurecr.io/assemblyline
+              docker build --build-arg version=$VERSION -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES .
+              docker push $IMAGE --all-tags
+            displayName: Build Base
+
+      - jobs: build-core
+        dependsOn: build-base
+        displayName: Build Core Image
+        steps:
+          - download: current
+            artifact: dist
+          - script: |
+              set -xv  # Echo commands before they are run
+              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
+              if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
+              export VERSION=${TAG/stable}
+              export VERSION=${VERSION/beta/b}
+              export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
+
+              cd assemblyline-core
+              ls -s dist ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/
+
+              export BASE=cccstemp.azurecr.io/assemblyline:${TAG}
+              export IMAGE=cccstemp.azurecr.io/assemblyline-core
+              docker build --build-arg base=$BASE --build-arg version=$VERSION --build-arg branch=$BUILD_TYPE -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES deployment
+              docker push $IMAGE --all-tags
+            displayName: Build Core
+
+      - jobs: build-ui
+        dependsOn: build-core
+        displayName: Build UI Image
+        steps:
+          - download: current
+            artifact: dist
+          - script: |
+              set -xv  # Echo commands before they are run
+              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
+              if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
+              export VERSION=${TAG/stable}
+              export VERSION=${VERSION/beta/b}
+              export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
+
+              cd assemblyline-ui
+              ls -s dist ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/
+
+              export BASE=cccstemp.azurecr.io/assemblyline-core:${TAG}
+
+              export IMAGE=cccstemp.azurecr.io/assemblyline-ui
+              docker build --build-arg base=$BASE --build-arg version=$VERSION --build-arg branch=$BUILD_TYPE -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES docker/ui
+              docker push $IMAGE --all-tags
+
+              export IMAGE=cccstemp.azurecr.io/assemblyline-ui
+              docker build --build-arg base=$BASE --build-arg version=$VERSION --build-arg branch=$BUILD_TYPE -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES docker/socketio
+              docker push $IMAGE --all-tags
+            displayName: Build UI
+
+      - jobs: test-base
+        dependsOn: build-base
+        displayName: Test Base Image
+        steps:
+          - script: |
+              set -xv  # Echo commands before they are run
+              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
+
+              cd assemblyline-base
+
+              docker run -v ./test:/test -w /test cccstemp.azurecr.io/assemblyline:${TAG} /bin/bash -c "pip install -r requirements.txt; pytest"
+
+            displayName: Test Base
+
+      - jobs: test-core
+        dependsOn: build-core
+        displayName: Test Core Image
+        steps:
+          - script: |
+              set -xv  # Echo commands before they are run
+              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
+
+              cd assemblyline-core
+
+              docker run -v ./test:/test -w /test cccstemp.azurecr.io/assemblyline-core:${TAG} /bin/bash -c "pip install -r requirements.txt; pytest"
+
+            displayName: Test Core

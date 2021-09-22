@@ -1,0 +1,12 @@
+[submodule "assemblyline-base"]
+	path = assemblyline-base
+	url = https://github.com/CybercentreCanada/assemblyline-base.git
+	branch = .
+[submodule "assemblyline-core"]
+	path = assemblyline-core
+	url = https://github.com/CybercentreCanada/assemblyline-core.git
+	branch = .
+[submodule "assemblyline-ui"]
+	path = assemblyline-ui
+	url = https://github.com/CybercentreCanada/assemblyline-ui.git
+	branch = .
