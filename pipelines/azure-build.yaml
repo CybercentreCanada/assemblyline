@@ -57,6 +57,7 @@ stages:
 
               # make sure we are on the right branches for all other repos
               git submodule foreach git checkout -B $BRANCH --track origin/$BRANCH
+              git submodule foreach git pull
               sudo env "PATH=$PATH" python -m pip install --no-cache-dir -U wheel cython pip
 
               # Build base
