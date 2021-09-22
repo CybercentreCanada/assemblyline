@@ -33,7 +33,7 @@ resources:
 stages:
   - stage: build
     jobs:
-      - job: build-python
+      - job: build_python
         displayName: Build Python Packages
         steps:
           - task: UsePythonVersion@0
@@ -75,8 +75,8 @@ stages:
           - publish: $(System.DefaultWorkingDirectory)/dist/
             artifact: dist
 
-      - job: build-base
-        dependsOn: build-python
+      - job: build_base
+        dependsOn: build_python
         displayName: Build Base Image
         steps:
           - download: current
@@ -97,8 +97,8 @@ stages:
               docker push $IMAGE --all-tags
             displayName: Build Base
 
-      - job: build-core
-        dependsOn: build-base
+      - job: build_core
+        dependsOn: build_base
         displayName: Build Core Image
         steps:
           - download: current
@@ -120,8 +120,8 @@ stages:
               docker push $IMAGE --all-tags
             displayName: Build Core
 
-      - job: build-ui
-        dependsOn: build-core
+      - job: build_ui
+        dependsOn: build_core
         displayName: Build UI Image
         steps:
           - download: current
@@ -148,8 +148,8 @@ stages:
               docker push $IMAGE --all-tags
             displayName: Build UI
 
-      - job: test-base
-        dependsOn: build-base
+      - job: test_base
+        dependsOn: build_base
         displayName: Test Base Image
         steps:
           - script: |
@@ -162,8 +162,8 @@ stages:
 
             displayName: Test Base
 
-      - job: test-core
-        dependsOn: build-core
+      - job: test_core
+        dependsOn: build_core
         displayName: Test Core Image
         steps:
           - script: |
