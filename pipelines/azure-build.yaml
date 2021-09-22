@@ -78,17 +78,16 @@ stages:
               cd ../
               ls dist
             displayName: Build Python Packages
-          - publish: $(System.DefaultWorkingDirectory)/dist/
-            artifact: dist
+          - publish: $(System.DefaultWorkingDirectory)
+            artifact: working
 
       - job: build_base
         dependsOn: build_python
         displayName: Build Base Image
         steps:
-          - checkout: self
-            submodules: recursive
+          - checkout: none
           - download: current
-            artifact: dist
+            artifact: working
           - task: Docker@2
             displayName: Login to docker registry
             inputs:
@@ -103,11 +102,12 @@ stages:
               export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
 
               cd assemblyline-base
-              mv ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ dist
+              mv ../dist/ dist
 
               export IMAGE=cccstemp.azurecr.io/assemblyline
               docker build --build-arg version=$VERSION -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES .
               docker push $IMAGE --all-tags
+            workingDirectory: $(System.DefaultWorkingDirectory)/working
             displayName: Build Base
 
       - job: build_core
