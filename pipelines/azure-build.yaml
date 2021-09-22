@@ -36,6 +36,8 @@ stages:
       - job: build_python
         displayName: Build Python Packages
         steps:
+          - checkout: self
+            submodules: recursive
           - task: UsePythonVersion@0
             displayName: Set python version
             inputs:
@@ -54,11 +56,14 @@ stages:
               export VERSION=${VERSION/beta/b}
 
               # make sure we are on the right branches for all other repos
+              git submodule update --remote
               git submodule foreach git checkout $BRANCH
+              ls .
               sudo env "PATH=$PATH" python -m pip install --no-cache-dir -U wheel cython pip
 
               # Build base
               cd assemblyline-base
+              ls .
               echo $VERSION > assemblyline/VERSION
               python setup.py sdist --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/
 
@@ -71,7 +76,7 @@ stages:
               cd ../assemblyline-ui
               echo $VERSION > assemblyline_ui/VERSION
               python setup.py bdist_wheel --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/
-
+            displayName: Build Python Packages
           - publish: $(System.DefaultWorkingDirectory)/dist/
             artifact: dist
 
