@@ -107,7 +107,7 @@ stages:
               export IMAGE=cccstemp.azurecr.io/assemblyline
               docker build --build-arg version=$VERSION -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES .
               docker push $IMAGE --all-tags
-            workingDirectory: $(System.DefaultWorkingDirectory)/working
+            workingDirectory: $(Pipeline.Workspace)/working
             displayName: Build Base
 
       - job: build_core
