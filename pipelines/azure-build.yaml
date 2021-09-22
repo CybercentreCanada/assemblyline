@@ -56,7 +56,6 @@ stages:
               export VERSION=${VERSION/beta/b}
 
               # make sure we are on the right branches for all other repos
-              git submodule update --remote
               git submodule foreach git checkout $BRANCH
               sudo env "PATH=$PATH" python -m pip install --no-cache-dir -U wheel cython pip
 
