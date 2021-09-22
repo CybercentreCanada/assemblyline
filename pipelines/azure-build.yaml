@@ -75,7 +75,7 @@ stages:
           - publish: $(System.DefaultWorkingDirectory)/dist/
             artifact: dist
 
-      - jobs: build-base
+      - job: build-base
         dependsOn: build-python
         displayName: Build Base Image
         steps:
@@ -97,7 +97,7 @@ stages:
               docker push $IMAGE --all-tags
             displayName: Build Base
 
-      - jobs: build-core
+      - job: build-core
         dependsOn: build-base
         displayName: Build Core Image
         steps:
@@ -120,7 +120,7 @@ stages:
               docker push $IMAGE --all-tags
             displayName: Build Core
 
-      - jobs: build-ui
+      - job: build-ui
         dependsOn: build-core
         displayName: Build UI Image
         steps:
@@ -148,7 +148,7 @@ stages:
               docker push $IMAGE --all-tags
             displayName: Build UI
 
-      - jobs: test-base
+      - job: test-base
         dependsOn: build-base
         displayName: Test Base Image
         steps:
@@ -162,7 +162,7 @@ stages:
 
             displayName: Test Base
 
-      - jobs: test-core
+      - job: test-core
         dependsOn: build-core
         displayName: Test Core Image
         steps:
