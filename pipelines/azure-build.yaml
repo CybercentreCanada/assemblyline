@@ -58,12 +58,10 @@ stages:
               # make sure we are on the right branches for all other repos
               git submodule update --remote
               git submodule foreach git checkout $BRANCH
-              ls .
               sudo env "PATH=$PATH" python -m pip install --no-cache-dir -U wheel cython pip
 
               # Build base
               cd assemblyline-base
-              ls .
               echo $VERSION > assemblyline/VERSION
               python setup.py sdist --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/
 
@@ -76,6 +74,9 @@ stages:
               cd ../assemblyline-ui
               echo $VERSION > assemblyline_ui/VERSION
               python setup.py bdist_wheel --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/
+
+              cd ../
+              ls dist
             displayName: Build Python Packages
           - publish: $(System.DefaultWorkingDirectory)/dist/
             artifact: dist
@@ -84,8 +85,15 @@ stages:
         dependsOn: build_python
         displayName: Build Base Image
         steps:
+          - checkout: self
+            submodules: recursive
           - download: current
             artifact: dist
+          - task: Docker@2
+            displayName: Login to docker registry
+            inputs:
+              command: login
+              containerRegistry: cccstemp
           - script: |
               set -xv  # Echo commands before they are run
               export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
@@ -95,7 +103,7 @@ stages:
               export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
 
               cd assemblyline-base
-              ls -s dist ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/
+              mv ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ dist
 
               export IMAGE=cccstemp.azurecr.io/assemblyline
               docker build --build-arg version=$VERSION -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES .
@@ -106,8 +114,15 @@ stages:
         dependsOn: build_base
         displayName: Build Core Image
         steps:
+          - checkout: self
+            submodules: recursive
           - download: current
             artifact: dist
+          - task: Docker@2
+            displayName: Login to docker registry
+            inputs:
+              command: login
+              containerRegistry: cccstemp
           - script: |
               set -xv  # Echo commands before they are run
               export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
@@ -117,7 +132,7 @@ stages:
               export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
 
               cd assemblyline-core
-              ls -s dist ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/
+              mv ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ dist
 
               export BASE=cccstemp.azurecr.io/assemblyline:${TAG}
               export IMAGE=cccstemp.azurecr.io/assemblyline-core
@@ -129,8 +144,15 @@ stages:
         dependsOn: build_core
         displayName: Build UI Image
         steps:
+          - checkout: self
+            submodules: recursive
           - download: current
             artifact: dist
+          - task: Docker@2
+            displayName: Login to docker registry
+            inputs:
+              command: login
+              containerRegistry: cccstemp
           - script: |
               set -xv  # Echo commands before they are run
               export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
@@ -140,7 +162,7 @@ stages:
               export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
 
               cd assemblyline-ui
-              ls -s dist ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/
+              mv ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ dist
 
               export BASE=cccstemp.azurecr.io/assemblyline-core:${TAG}
 
@@ -157,6 +179,8 @@ stages:
         dependsOn: build_base
         displayName: Test Base Image
         steps:
+          - checkout: self
+            submodules: recursive
           - script: |
               set -xv  # Echo commands before they are run
               export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
@@ -171,6 +195,8 @@ stages:
         dependsOn: build_core
         displayName: Test Core Image
         steps:
+          - checkout: self
+            submodules: recursive
           - script: |
               set -xv  # Echo commands before they are run
               export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
