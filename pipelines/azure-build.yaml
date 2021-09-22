@@ -56,7 +56,7 @@ stages:
               export VERSION=${VERSION/beta/b}
 
               # make sure we are on the right branches for all other repos
-              git submodule foreach git checkout -B $BRANCH
+              git submodule foreach git checkout -B $BRANCH --track origin/$BRANCH
               sudo env "PATH=$PATH" python -m pip install --no-cache-dir -U wheel cython pip
 
               # Build base
