@@ -135,7 +135,10 @@ stages:
 
               export BASE=cccstemp.azurecr.io/assemblyline
               export IMAGE=cccstemp.azurecr.io/assemblyline-core
-              docker build --build-arg base=$BASE --build-arg version=$VERSION --build-arg branch=$BUILD_TYPE -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES deployment
+              docker build --build-arg base=$BASE \
+                           --build-arg version=$VERSION \
+                           --build-arg branch=$BUILD_TYPE \
+                           -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES . -f deployment/Dockerfile
               docker push $IMAGE --all-tags
             workingDirectory: $(Pipeline.Workspace)/working
             displayName: Build Core
@@ -235,7 +238,7 @@ stages:
           elasticsearch: elasticsearch
           redis: redis
           minio: minio
-        displayName: Test Core Image
+        displayName: Test UI Image
         steps:
           - checkout: none
           - download: current
