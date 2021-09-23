@@ -133,7 +133,7 @@ stages:
               cd assemblyline-core
               mv ../dist/ dist
 
-              export BASE=cccstemp.azurecr.io/assemblyline:${TAG}
+              export BASE=cccstemp.azurecr.io/assemblyline
               export IMAGE=cccstemp.azurecr.io/assemblyline-core
               docker build --build-arg base=$BASE --build-arg version=$VERSION --build-arg branch=$BUILD_TYPE -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES deployment
               docker push $IMAGE --all-tags
@@ -163,7 +163,7 @@ stages:
               cd assemblyline-ui
               mv ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ dist
 
-              export BASE=cccstemp.azurecr.io/assemblyline-core:${TAG}
+              export BASE=cccstemp.azurecr.io/assemblyline-core
 
               export IMAGE=cccstemp.azurecr.io/assemblyline-ui
               docker build --build-arg base=$BASE --build-arg version=$VERSION --build-arg branch=$BUILD_TYPE -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES docker/ui
@@ -193,7 +193,7 @@ stages:
 
               cd assemblyline-base
 
-              docker run -v ./test:/test -w /test cccstemp.azurecr.io/assemblyline:${TAG} /bin/bash -c "pip install -r requirements.txt; pytest"
+              docker run -v `pwd`/test:/test -w /test cccstemp.azurecr.io/assemblyline:${TAG} /bin/bash -c "pip install -r requirements.txt; pytest"
             workingDirectory: $(Pipeline.Workspace)/working
             displayName: Test Base
 
@@ -215,6 +215,6 @@ stages:
 
               cd assemblyline-core
 
-              docker run -v ./test:/test -w /test cccstemp.azurecr.io/assemblyline-core:${TAG} /bin/bash -c "pip install -r requirements.txt; pytest"
+              docker run -v `pwd`/test:/test -w /test cccstemp.azurecr.io/assemblyline-core:${TAG} /bin/bash -c "pip install -r requirements.txt; pytest"
             workingDirectory: $(Pipeline.Workspace)/working
             displayName: Test Core
