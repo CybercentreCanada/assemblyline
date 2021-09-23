@@ -1,0 +1,15 @@
+filestore:
+  cache:
+    - file:///var/cache/assemblyline/
+  storage:
+    - file:///var/cache/assemblyline/
+core:
+  redis:
+    nonpersistent:
+      host: localhost
+      port: 6379
+    persistent:
+      host: localhost
+      port: 6379
+datastore:
+  hosts: ["localhost:9200"]
