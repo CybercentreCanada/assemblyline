@@ -14,3 +14,11 @@
 	path = assemblyline-service-server
 	url = https://github.com/CybercentreCanada/assemblyline-service-server.git
 	branch = .
+[submodule "assemblyline-v4-service"]
+	path = assemblyline-v4-service
+	url = https://github.com/CybercentreCanada/assemblyline-v4-service.git
+	branch = .
+[submodule "assemblyline-service-client"]
+	path = assemblyline-service-client
+	url = https://github.com/CybercentreCanada/assemblyline-service-client.git
+	branch = .

@@ -80,6 +80,14 @@ stages:
               echo $VERSION > assemblyline_service_server/VERSION
               python setup.py bdist_wheel --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/
 
+              cd ../assemblyline-service-client
+              echo $VERSION > assemblyline_service_client/VERSION
+              python setup.py bdist_wheel --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/
+
+              cd ../assemblyline-v4-service
+              echo $VERSION > assemblyline_v4_service/VERSION
+              python setup.py bdist_wheel --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/
+
               cd ../
               ls dist
             displayName: Build Python Packages
@@ -178,6 +186,46 @@ stages:
                            --build-arg branch=$BUILD_TYPE \
                            -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES . -f docker/Dockerfile
               docker push $IMAGE --all-tags
+            workingDirectory: $(Pipeline.Workspace)/working
+            displayName: Build Core
+
+      - job: build_service_base
+        dependsOn: build_base
+        displayName: Build Service Base Image
+        steps:
+          - checkout: none
+          - download: current
+            artifact: working
+          - task: Docker@2
+            displayName: Login to docker registry
+            inputs:
+              command: login
+              containerRegistry: cccstemp
+          - script: |
+              set -xv  # Echo commands before they are run
+              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
+              if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
+              export VERSION=${TAG/stable}
+              export VERSION=${VERSION/beta/b}
+              export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
+
+              cd assemblyline-v4-service
+              mv ../dist/ dist
+
+              export BASE=cccstemp.azurecr.io/assemblyline
+
+              export IMAGE="cccstemp.azurecr.io/assemblyline-v4-service-base"
+              docker build --build-arg base=$BASE \
+                           --build-arg version=$VERSION \
+                           --build-arg branch=$BUILD_TYPE -t $IMAGE:$TAG -t $IMAGE:$SERIES -t $IMAGE:$BUILD_TYPE . -f docker/Dockerfile
+              docker push $IMAGE --all-tags
+
+              export IMAGE="cccstemp.azurecr.io/assemblyline-service-resultsample"
+              docker build --build-arg base=$BASE \
+                           --build-arg version=$VERSION \
+                           --build-arg branch=$BUILD_TYPE -f assemblyline_result_sample_service/Dockerfile -t $IMAGE:$TAG -t $IMAGE:$SERIES  -t $IMAGE:$BUILD_TYPE .
+              docker push $IMAGE --all-tags
+
             workingDirectory: $(Pipeline.Workspace)/working
             displayName: Build Core
 
@@ -347,4 +395,32 @@ stages:
                          cccstemp.azurecr.io/assemblyline-service-server:${TAG} \
                          /bin/bash -c "pip install -r requirements.txt; CI=1 pytest -rsx --durations=10"
             workingDirectory: $(Pipeline.Workspace)/working/assemblyline-service-server
+            displayName: Test Service Server
+
+      - job: test_service_base
+        dependsOn: build_service_base
+        timeoutInMinutes: 10
+        services:
+          elasticsearch: elasticsearch
+          redis: redis
+          minio: minio
+        displayName: Test Service Base Image
+        steps:
+          - checkout: none
+          - download: current
+            artifact: working
+          - task: Docker@2
+            displayName: Login to docker registry
+            inputs:
+              command: login
+              containerRegistry: cccstemp
+          - script: |
+              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
+
+              docker run -v `pwd`/test:/test \
+                         -v $(Pipeline.Workspace)/working/pipelines/base-config.yaml:/etc/assemblyline/config.yml \
+                         -w /test \
+                         cccstemp.azurecr.io/assemblyline-service-server:${TAG} \
+                         /bin/bash -c "pip install -r requirements.txt; CI=1 pytest -rsx --durations=10"
+            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-v4-service
             displayName: Test Service Server
