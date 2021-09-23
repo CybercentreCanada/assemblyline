@@ -114,10 +114,9 @@ stages:
         dependsOn: build_base
         displayName: Build Core Image
         steps:
-          - checkout: self
-            submodules: recursive
+          - checkout: none
           - download: current
-            artifact: dist
+            artifact: working
           - task: Docker@2
             displayName: Login to docker registry
             inputs:
@@ -132,22 +131,22 @@ stages:
               export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
 
               cd assemblyline-core
-              mv ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ dist
+              mv ../dist/ dist
 
               export BASE=cccstemp.azurecr.io/assemblyline:${TAG}
               export IMAGE=cccstemp.azurecr.io/assemblyline-core
               docker build --build-arg base=$BASE --build-arg version=$VERSION --build-arg branch=$BUILD_TYPE -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES deployment
               docker push $IMAGE --all-tags
+            workingDirectory: $(Pipeline.Workspace)/working
             displayName: Build Core
 
       - job: build_ui
         dependsOn: build_core
         displayName: Build UI Image
         steps:
-          - checkout: self
-            submodules: recursive
+          - checkout: none
           - download: current
-            artifact: dist
+            artifact: working
           - task: Docker@2
             displayName: Login to docker registry
             inputs:
@@ -173,14 +172,21 @@ stages:
               export IMAGE=cccstemp.azurecr.io/assemblyline-ui
               docker build --build-arg base=$BASE --build-arg version=$VERSION --build-arg branch=$BUILD_TYPE -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES docker/socketio
               docker push $IMAGE --all-tags
+            workingDirectory: $(Pipeline.Workspace)/working
             displayName: Build UI
 
       - job: test_base
         dependsOn: build_base
         displayName: Test Base Image
         steps:
-          - checkout: self
-            submodules: recursive
+          - checkout: none
+          - download: current
+            artifact: working
+          - task: Docker@2
+            displayName: Login to docker registry
+            inputs:
+              command: login
+              containerRegistry: cccstemp
           - script: |
               set -xv  # Echo commands before they are run
               export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
@@ -188,15 +194,21 @@ stages:
               cd assemblyline-base
 
               docker run -v ./test:/test -w /test cccstemp.azurecr.io/assemblyline:${TAG} /bin/bash -c "pip install -r requirements.txt; pytest"
-
+            workingDirectory: $(Pipeline.Workspace)/working
             displayName: Test Base
 
       - job: test_core
         dependsOn: build_core
         displayName: Test Core Image
         steps:
-          - checkout: self
-            submodules: recursive
+          - checkout: none
+          - download: current
+            artifact: working
+          - task: Docker@2
+            displayName: Login to docker registry
+            inputs:
+              command: login
+              containerRegistry: cccstemp
           - script: |
               set -xv  # Echo commands before they are run
               export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
@@ -204,5 +216,5 @@ stages:
               cd assemblyline-core
 
               docker run -v ./test:/test -w /test cccstemp.azurecr.io/assemblyline-core:${TAG} /bin/bash -c "pip install -r requirements.txt; pytest"
-
+            workingDirectory: $(Pipeline.Workspace)/working
             displayName: Test Core
