@@ -144,7 +144,7 @@ stages:
             displayName: Build Core
 
       - job: build_ui
-        dependsOn: build_core
+        dependsOn: ["build_base", "build_python"]
         displayName: Build UI Image
         steps:
           - checkout: none
