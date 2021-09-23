@@ -163,13 +163,13 @@ stages:
               cd assemblyline-ui
               mv ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ dist
 
-              export BASE=cccstemp.azurecr.io/assemblyline-core
+              export BASE=cccstemp.azurecr.io/assemblyline
 
               export IMAGE=cccstemp.azurecr.io/assemblyline-ui
               docker build --build-arg base=$BASE --build-arg version=$VERSION --build-arg branch=$BUILD_TYPE -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES docker/ui
               docker push $IMAGE --all-tags
 
-              export IMAGE=cccstemp.azurecr.io/assemblyline-ui
+              export IMAGE=cccstemp.azurecr.io/assemblyline-socketio
               docker build --build-arg base=$BASE --build-arg version=$VERSION --build-arg branch=$BUILD_TYPE -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES docker/socketio
               docker push $IMAGE --all-tags
             workingDirectory: $(Pipeline.Workspace)/working
@@ -178,6 +178,11 @@ stages:
       - job: test_base
         dependsOn: build_base
         displayName: Test Base Image
+        timeoutInMinutes: 10
+        services:
+          elasticsearch: elasticsearch
+          redis: redis
+          minio: minio
         steps:
           - checkout: none
           - download: current
@@ -193,12 +198,16 @@ stages:
 
               cd assemblyline-base
 
-              docker run -v `pwd`/test:/test -w /test cccstemp.azurecr.io/assemblyline:${TAG} /bin/bash -c "pip install -r requirements.txt; pytest"
+              docker run -v `pwd`/test:/test -w /test cccstemp.azurecr.io/assemblyline:${TAG} /bin/bash -c "pip install -r requirements.txt; CI=1 pytest -rsx --durations=10"
             workingDirectory: $(Pipeline.Workspace)/working
             displayName: Test Base
 
       - job: test_core
         dependsOn: build_core
+        timeoutInMinutes: 10
+        services:
+          elasticsearch: elasticsearch
+          redis: redis
         displayName: Test Core Image
         steps:
           - checkout: none
@@ -215,6 +224,38 @@ stages:
 
               cd assemblyline-core
 
-              docker run -v `pwd`/test:/test -w /test cccstemp.azurecr.io/assemblyline-core:${TAG} /bin/bash -c "pip install -r requirements.txt; pytest"
+              docker run -v `pwd`/test:/test -w /test cccstemp.azurecr.io/assemblyline-core:${TAG} /bin/bash -c "pip install -r requirements.txt; CI=1 pytest -rsx --durations=10"
             workingDirectory: $(Pipeline.Workspace)/working
             displayName: Test Core
+
+      - job: test_ui
+        dependsOn: build_ui
+        timeoutInMinutes: 10
+        services:
+          elasticsearch: elasticsearch
+          redis: redis
+          minio: minio
+        displayName: Test Core Image
+        steps:
+          - checkout: none
+          - download: current
+            artifact: working
+          - task: Docker@2
+            displayName: Login to docker registry
+            inputs:
+              command: login
+              containerRegistry: cccstemp
+          - script: |
+              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
+
+              sudo docker run -d --name ui --network host --restart on-failure cccstemp.azurecr.io/assemblyline-ui:$TAG &
+              sudo docker run -d --name socketsrv --network host --restart on-failure cccstemp.azurecr.io/assemblyline-socketio:$TAG &
+              sudo docker run -d --name frontend --network host --restart on-failure cccs/assemblyline-ui-frontend &
+              sudo docker run -d --name nginx --network host --restart on-failure -e "FRONTEND_HOST=localhost" -e "UI_HOST=localhost" -e "SOCKET_HOST=localhost" -e "TEMPLATE=minimal" -e "FQDN=localhost" cccs/nginx-ssl-frontend
+
+              wget https://localhost --no-check-certificate --timeout=2 --retry-on-http-error=502 --waitretry=10 --retry-connrefused
+
+              cd assemblyline-ui
+              docker run -v `pwd`/test:/test -w /test cccstemp.azurecr.io/assemblyline-ui:${TAG} /bin/bash -c "pip install -r requirements.txt; CI=1 pytest -rsx --durations=10"
+            workingDirectory: $(Pipeline.Workspace)/working
+            displayName: Test UI
