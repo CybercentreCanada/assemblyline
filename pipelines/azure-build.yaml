@@ -259,11 +259,11 @@ stages:
               containerRegistry: cccstemp
           - script: |
               export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
-
-              sudo docker run -d --name ui --network host --restart on-failure cccstemp.azurecr.io/assemblyline-ui:$TAG &
-              sudo docker run -d --name socketsrv --network host --restart on-failure cccstemp.azurecr.io/assemblyline-socketio:$TAG &
-              sudo docker run -d --name frontend --network host --restart on-failure cccs/assemblyline-ui-frontend &
-              sudo docker run -d --name nginx --network host --restart on-failure -e "FRONTEND_HOST=localhost" -e "UI_HOST=localhost" -e "SOCKET_HOST=localhost" -e "TEMPLATE=minimal" -e "FQDN=localhost" cccs/nginx-ssl-frontend
+              docker pull cccstemp.azurecr.io/assemblyline-core:${TAG}
+              docker run -d --name ui --network host --restart on-failure cccstemp.azurecr.io/assemblyline-ui:$TAG &
+              docker run -d --name socketsrv --network host --restart on-failure cccstemp.azurecr.io/assemblyline-socketio:$TAG &
+              docker run -d --name frontend --network host --restart on-failure cccs/assemblyline-ui-frontend &
+              docker run -d --name nginx --network host --restart on-failure -e "FRONTEND_HOST=localhost" -e "UI_HOST=localhost" -e "SOCKET_HOST=localhost" -e "TEMPLATE=minimal" -e "FQDN=localhost" cccs/nginx-ssl-frontend
 
               wget https://localhost:5000 --no-check-certificate --timeout=2 --retry-on-http-error=502 --waitretry=10 --retry-connrefused
               wget https://localhost:5002 --no-check-certificate --timeout=2 --retry-on-http-error=502 --waitretry=10 --retry-connrefused
