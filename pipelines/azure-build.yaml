@@ -169,11 +169,11 @@ stages:
               export BASE=cccstemp.azurecr.io/assemblyline
 
               export IMAGE=cccstemp.azurecr.io/assemblyline-ui
-              docker build --build-arg base=$BASE --build-arg version=$VERSION --build-arg branch=$BUILD_TYPE -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES docker/ui
+              docker build --build-arg base=$BASE --build-arg version=$VERSION --build-arg branch=$BUILD_TYPE -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES . -f docker/ui/Dockerfile
               docker push $IMAGE --all-tags
 
               export IMAGE=cccstemp.azurecr.io/assemblyline-socketio
-              docker build --build-arg base=$BASE --build-arg version=$VERSION --build-arg branch=$BUILD_TYPE -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES docker/socketio
+              docker build --build-arg base=$BASE --build-arg version=$VERSION --build-arg branch=$BUILD_TYPE -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES . -f docker/socketio/Dockerfile
               docker push $IMAGE --all-tags
             workingDirectory: $(Pipeline.Workspace)/working
             displayName: Build UI
