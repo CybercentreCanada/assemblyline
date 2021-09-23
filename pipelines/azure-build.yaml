@@ -232,7 +232,11 @@ stages:
 
               cd assemblyline-core
 
-              docker run -v `pwd`/test:/test -w /test cccstemp.azurecr.io/assemblyline-core:${TAG} /bin/bash -c "pip install -r requirements.txt; CI=1 pytest -rsx --durations=10"
+              docker run -v `pwd`/test:/test \
+                         -v $(Pipeline.Workspace)/working/pipelines/base-config.yaml:/etc/assemblyline/config.yml \
+                         -w /test \
+                         --network host \
+                         cccstemp.azurecr.io/assemblyline-core:${TAG} /bin/bash -c "pip install -r requirements.txt; CI=1 pytest -rsx --durations=10"
             workingDirectory: $(Pipeline.Workspace)/working
             displayName: Test Core
 
@@ -264,6 +268,10 @@ stages:
               wget https://localhost --no-check-certificate --timeout=2 --retry-on-http-error=502 --waitretry=10 --retry-connrefused
 
               cd assemblyline-ui
-              docker run -v `pwd`/test:/test -w /test cccstemp.azurecr.io/assemblyline-ui:${TAG} /bin/bash -c "pip install -r requirements.txt; CI=1 pytest -rsx --durations=10"
+              docker run -v `pwd`/test:/test \
+                         -v $(Pipeline.Workspace)/working/pipelines/base-config.yaml:/etc/assemblyline/config.yml \
+                         -w /test \
+                         --network host \
+                         cccstemp.azurecr.io/assemblyline-ui:${TAG} /bin/bash -c "pip install -r requirements.txt; CI=1 pytest -rsx --durations=10"
             workingDirectory: $(Pipeline.Workspace)/working
             displayName: Test UI
