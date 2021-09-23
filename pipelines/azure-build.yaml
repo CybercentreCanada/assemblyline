@@ -164,7 +164,7 @@ stages:
               export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
 
               cd assemblyline-ui
-              mv ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ dist
+              mv ../dist/ dist
 
               export BASE=cccstemp.azurecr.io/assemblyline
 
