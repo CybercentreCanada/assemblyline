@@ -272,6 +272,7 @@ stages:
                          -v $(Pipeline.Workspace)/working/pipelines/base-config.yaml:/etc/assemblyline/config.yml \
                          -w /test \
                          --network host \
-                         cccstemp.azurecr.io/assemblyline-ui:${TAG} /bin/bash -c "pip install -r requirements.txt; CI=1 pytest -rsx --durations=10"
+                         cccstemp.azurecr.io/assemblyline-socketio:${TAG} \
+                         /bin/bash -c "pip install -r requirements.txt; CI=1 pytest -rsx --durations=10"
             workingDirectory: $(Pipeline.Workspace)/working
             displayName: Test UI
