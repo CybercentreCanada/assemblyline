@@ -204,7 +204,7 @@ stages:
               docker run -v `pwd`/test:/test \
                          -v $(Pipeline.Workspace)/working/pipelines/base-config.yaml:/etc/assemblyline/config.yml \
                          -w /test \
-                         --network host
+                         --network host \
                          cccstemp.azurecr.io/assemblyline:${TAG} \
                          /bin/bash -c "pip install -r requirements.txt; CI=1 pytest -rsx --durations=10"
             workingDirectory: $(Pipeline.Workspace)/working
