@@ -10,3 +10,7 @@
 	path = assemblyline-ui
 	url = https://github.com/CybercentreCanada/assemblyline-ui.git
 	branch = .
+[submodule "assemblyline-service-server"]
+	path = assemblyline-service-server
+	url = https://github.com/CybercentreCanada/assemblyline-service-server.git
+	branch = .

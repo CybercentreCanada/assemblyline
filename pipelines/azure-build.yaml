@@ -75,6 +75,11 @@ stages:
               echo $VERSION > assemblyline_ui/VERSION
               python setup.py bdist_wheel --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/
 
+              # Build service server
+              cd ../assemblyline-service-server
+              echo $VERSION > assemblyline_service_server/VERSION
+              python setup.py bdist_wheel --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/
+
               cd ../
               ls dist
             displayName: Build Python Packages
@@ -139,6 +144,39 @@ stages:
                            --build-arg version=$VERSION \
                            --build-arg branch=$BUILD_TYPE \
                            -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES . -f deployment/Dockerfile
+              docker push $IMAGE --all-tags
+            workingDirectory: $(Pipeline.Workspace)/working
+            displayName: Build Core
+
+      - job: build_service_server
+        dependsOn: build_core
+        displayName: Build Service Server Image
+        steps:
+          - checkout: none
+          - download: current
+            artifact: working
+          - task: Docker@2
+            displayName: Login to docker registry
+            inputs:
+              command: login
+              containerRegistry: cccstemp
+          - script: |
+              set -xv  # Echo commands before they are run
+              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
+              if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
+              export VERSION=${TAG/stable}
+              export VERSION=${VERSION/beta/b}
+              export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
+
+              cd assemblyline-service-server
+              mv ../dist/ dist
+
+              export BASE=cccstemp.azurecr.io/assemblyline-core
+              export IMAGE=cccstemp.azurecr.io/assemblyline-service-server
+              docker build --build-arg base=$BASE \
+                           --build-arg version=$VERSION \
+                           --build-arg branch=$BUILD_TYPE \
+                           -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES . -f docker/Dockerfile
               docker push $IMAGE --all-tags
             workingDirectory: $(Pipeline.Workspace)/working
             displayName: Build Core
@@ -259,11 +297,12 @@ stages:
               containerRegistry: cccstemp
           - script: |
               export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
-              docker pull cccstemp.azurecr.io/assemblyline-core:${TAG}
+
               docker run -d --name ui --network host --restart on-failure cccstemp.azurecr.io/assemblyline-ui:$TAG &
               docker run -d --name socketsrv --network host --restart on-failure cccstemp.azurecr.io/assemblyline-socketio:$TAG &
               docker run -d --name frontend --network host --restart on-failure cccs/assemblyline-ui-frontend &
-              docker run -d --name nginx --network host --restart on-failure -e "FRONTEND_HOST=localhost" -e "UI_HOST=localhost" -e "SOCKET_HOST=localhost" -e "TEMPLATE=minimal" -e "FQDN=localhost" cccs/nginx-ssl-frontend
+              docker run -d --name nginx --network host --restart on-failure -e "FRONTEND_HOST=localhost" -e "UI_HOST=localhost" -e "SOCKET_HOST=localhost" -e "TEMPLATE=minimal" -e "FQDN=localhost" cccs/nginx-ssl-frontend &
+              wait
 
               wget https://localhost:5000 --no-check-certificate --timeout=2 --retry-on-http-error=502 --waitretry=10 --retry-connrefused
               wget https://localhost:5002 --no-check-certificate --timeout=2 --retry-on-http-error=502 --waitretry=10 --retry-connrefused
@@ -278,3 +317,34 @@ stages:
                          /bin/bash -c "pip install -r requirements.txt; CI=1 pytest -rsx --durations=10"
             workingDirectory: $(Pipeline.Workspace)/working
             displayName: Test UI
+
+      - job: test_service_server
+        dependsOn: build_service_server
+        timeoutInMinutes: 10
+        services:
+          elasticsearch: elasticsearch
+          redis: redis
+          minio: minio
+        displayName: Test Service Server Image
+        steps:
+          - checkout: none
+          - download: current
+            artifact: working
+          - task: Docker@2
+            displayName: Login to docker registry
+            inputs:
+              command: login
+              containerRegistry: cccstemp
+          - script: |
+              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
+
+              docker run -d --name server --network host --restart on-failure cccstemp.azurecr.io/assemblyline-service-server:$TAG
+
+              docker run -v `pwd`/test:/test \
+                         -v $(Pipeline.Workspace)/working/pipelines/base-config.yaml:/etc/assemblyline/config.yml \
+                         -w /test \
+                         --network host \
+                         cccstemp.azurecr.io/assemblyline-service-server:${TAG} \
+                         /bin/bash -c "pip install -r requirements.txt; CI=1 pytest -rsx --durations=10"
+            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-service-server
+            displayName: Test Service Server
