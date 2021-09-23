@@ -265,6 +265,8 @@ stages:
               sudo docker run -d --name frontend --network host --restart on-failure cccs/assemblyline-ui-frontend &
               sudo docker run -d --name nginx --network host --restart on-failure -e "FRONTEND_HOST=localhost" -e "UI_HOST=localhost" -e "SOCKET_HOST=localhost" -e "TEMPLATE=minimal" -e "FQDN=localhost" cccs/nginx-ssl-frontend
 
+              wget https://localhost:5000 --no-check-certificate --timeout=2 --retry-on-http-error=502 --waitretry=10 --retry-connrefused
+              wget https://localhost:5002 --no-check-certificate --timeout=2 --retry-on-http-error=502 --waitretry=10 --retry-connrefused
               wget https://localhost --no-check-certificate --timeout=2 --retry-on-http-error=502 --waitretry=10 --retry-connrefused
 
               cd assemblyline-ui
