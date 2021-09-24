@@ -147,7 +147,12 @@ stages:
 
               set +xv
               export IMAGE=cccstemp.azurecr.io/assemblyline
-              docker build --build-arg version=$VERSION -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES . | while read line ; do echo "$(date) | $line"; done;
+              # docker build --build-arg version=$VERSION -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES . | while read line ; do echo "$(date) | $line"; done;
+              docker build --build-arg version=$VERSION \
+                           --build-arg build_image=cccstemp.azurecr.io/assemblyline-root-build:$BUILD_TYPE \
+                           --build-arg base=cccstemp.azurecr.io/assemblyline-root \
+                           --build-arg tag=$BUILD_TYPE \
+                           -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES . -f incremental.Dockerfile | while read line ; do echo "$(date) | $line"; done;
               docker push $IMAGE -q --all-tags
             workingDirectory: $(Pipeline.Workspace)/working
             displayName: Build Base
