@@ -30,7 +30,7 @@ stages:
               if [[ "$BRANCH" == *master* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
 
               export IMAGE=cccstemp.azurecr.io/assemblyline-root
-              docker build --build-arg -t $IMAGE:$BUILD_TYPE root-image
+              docker build -t $IMAGE:$BUILD_TYPE root-image
               docker push $IMAGE -q --all-tags
 
               export BASE=$IMAGE
