@@ -117,7 +117,7 @@ stages:
 
               export IMAGE=assemblyline-ui-frontend
               docker build --build-arg version=$VERSION -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES .
-              docker push $IMAGE --all-tags
+              docker push $IMAGE -q --all-tags
             workingDirectory: $(Pipeline.Workspace)/working
             displayName: Build Frontend
 
@@ -145,8 +145,8 @@ stages:
               mv ../dist/ dist
 
               export IMAGE=cccstemp.azurecr.io/assemblyline
-              docker build --build-arg version=$VERSION -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES .
-              docker push $IMAGE --all-tags
+              docker build --build-arg version=$VERSION -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES . | while read line ; do echo "$(date) | $line"; done;
+              docker push $IMAGE -q --all-tags
             workingDirectory: $(Pipeline.Workspace)/working
             displayName: Build Base
 
@@ -179,7 +179,7 @@ stages:
                            --build-arg version=$VERSION \
                            --build-arg branch=$BUILD_TYPE \
                            -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES . -f deployment/Dockerfile
-              docker push $IMAGE --all-tags
+              docker push $IMAGE -q --all-tags
             workingDirectory: $(Pipeline.Workspace)/working
             displayName: Build Core
 
@@ -212,7 +212,7 @@ stages:
                            --build-arg version=$VERSION \
                            --build-arg branch=$BUILD_TYPE \
                            -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES . -f docker/Dockerfile
-              docker push $IMAGE --all-tags
+              docker push $IMAGE -q --all-tags
             workingDirectory: $(Pipeline.Workspace)/working
             displayName: Build Core
 
@@ -244,14 +244,14 @@ stages:
               export IMAGE="cccstemp.azurecr.io/assemblyline-v4-service-base"
               docker build --build-arg base=$BASE \
                            --build-arg version=$VERSION \
-                           --build-arg branch=$BUILD_TYPE -t $IMAGE:$TAG -t $IMAGE:$SERIES -t $IMAGE:$BUILD_TYPE . -f docker/Dockerfile
-              docker push $IMAGE --all-tags
+                           --build-arg branch=$BUILD_TYPE -t $IMAGE:$TAG -t $IMAGE:$SERIES -t $IMAGE:$BUILD_TYPE . -f docker/Dockerfile | while read line ; do echo "$(date) | $line"; done;
+              docker push $IMAGE -q --all-tags
 
               export IMAGE="cccstemp.azurecr.io/assemblyline-service-resultsample"
               docker build --build-arg base=$BASE \
                            --build-arg version=$VERSION \
-                           --build-arg branch=$BUILD_TYPE -f assemblyline_result_sample_service/Dockerfile -t $IMAGE:$TAG -t $IMAGE:$SERIES  -t $IMAGE:$BUILD_TYPE .
-              docker push $IMAGE --all-tags
+                           --build-arg branch=$BUILD_TYPE -f assemblyline_result_sample_service/Dockerfile -t $IMAGE:$TAG -t $IMAGE:$SERIES  -t $IMAGE:$BUILD_TYPE . | while read line ; do echo "$(date) | $line"; done;
+              docker push $IMAGE -q --all-tags
 
             workingDirectory: $(Pipeline.Workspace)/working
             displayName: Build Service Base
@@ -282,12 +282,12 @@ stages:
               export BASE=cccstemp.azurecr.io/assemblyline
 
               export IMAGE=cccstemp.azurecr.io/assemblyline-ui
-              docker build --build-arg base=$BASE --build-arg version=$VERSION --build-arg branch=$BUILD_TYPE -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES . -f docker/ui/Dockerfile
-              docker push $IMAGE --all-tags
+              docker build --build-arg base=$BASE --build-arg version=$VERSION --build-arg branch=$BUILD_TYPE -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES . -f docker/ui/Dockerfile | while read line ; do echo "$(date) | $line"; done;
+              docker push $IMAGE -q --all-tags
 
               export IMAGE=cccstemp.azurecr.io/assemblyline-socketio
-              docker build --build-arg base=$BASE --build-arg version=$VERSION --build-arg branch=$BUILD_TYPE -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES . -f docker/socketio/Dockerfile
-              docker push $IMAGE --all-tags
+              docker build --build-arg base=$BASE --build-arg version=$VERSION --build-arg branch=$BUILD_TYPE -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES . -f docker/socketio/Dockerfile | while read line ; do echo "$(date) | $line"; done;
+              docker push $IMAGE -q --all-tags
             workingDirectory: $(Pipeline.Workspace)/working
             displayName: Build UI
 
