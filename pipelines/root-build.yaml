@@ -31,7 +31,7 @@ stages:
               export BRANCH=${BUILD_SOURCEBRANCH#"refs/heads/"}
               if [[ "$BRANCH" == *master* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
 
-              docker build -t common:local root-image -f common.Dockerfile
+              docker build -t common:local root-image -f root-image/common.Dockerfile
 
               export IMAGE=cccstemp.azurecr.io/assemblyline-root-build
               docker build --build-arg base=common:local -t $IMAGE:$BUILD_TYPE build-image
