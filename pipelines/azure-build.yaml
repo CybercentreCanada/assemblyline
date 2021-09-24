@@ -118,7 +118,7 @@ stages:
               export IMAGE=assemblyline-ui-frontend
               docker build --build-arg version=$VERSION -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES .
               docker push $IMAGE -q --all-tags
-            workingDirectory: $(Pipeline.Workspace)/working
+            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend/
             displayName: Build Frontend
 
       - job: build_base
