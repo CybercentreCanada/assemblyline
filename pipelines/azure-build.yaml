@@ -32,6 +32,7 @@ resources:
 
 stages:
   - stage: build
+    displayName: Build and Test
     jobs:
       - job: build_python
         displayName: Build Python Packages
@@ -227,7 +228,7 @@ stages:
               docker push $IMAGE --all-tags
 
             workingDirectory: $(Pipeline.Workspace)/working
-            displayName: Build Core
+            displayName: Build Service Base
 
       - job: build_ui
         dependsOn: ["build_base", "build_python"]
@@ -420,7 +421,21 @@ stages:
               docker run -v `pwd`/test:/test \
                          -v $(Pipeline.Workspace)/working/pipelines/base-config.yaml:/etc/assemblyline/config.yml \
                          -w /test \
-                         cccstemp.azurecr.io/assemblyline-service-server:${TAG} \
+                         cccstemp.azurecr.io/assemblyline-v4-service-base:${TAG} \
                          /bin/bash -c "pip install -r requirements.txt; CI=1 pytest -rsx --durations=10"
             workingDirectory: $(Pipeline.Workspace)/working/assemblyline-v4-service
             displayName: Test Service Server
+  - stage: deploy
+    displayName: Deploy
+    jobs:
+    - job: deploy_python
+      displayName: Deploy Python Packages
+      steps:
+        - checkout: none
+        - download: current
+          artifact: working
+        - script: |
+            export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
+            echo "Fake deploy for now"
+          workingDirectory: $(Pipeline.Workspace)/working/dist
+          displayName: Test Service Server
