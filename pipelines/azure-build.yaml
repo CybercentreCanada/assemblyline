@@ -240,19 +240,21 @@ stages:
               cd assemblyline-v4-service
               mv ../dist/ dist
 
-              export BASE=cccstemp.azurecr.io/assemblyline
 
               set +xv
+
+              export BASE=cccstemp.azurecr.io/assemblyline
               export IMAGE="cccstemp.azurecr.io/assemblyline-v4-service-base"
               docker build --build-arg base=$BASE \
                            --build-arg version=$VERSION \
                            --build-arg branch=$BUILD_TYPE -t $IMAGE:$TAG -t $IMAGE:$SERIES -t $IMAGE:$BUILD_TYPE . -f docker/Dockerfile | while read line ; do echo "$(date) | $line"; done;
               docker push $IMAGE -q --all-tags
 
+              export BASE=cccstemp.azurecr.io/assemblyline-v4-service-base
               export IMAGE="cccstemp.azurecr.io/assemblyline-service-resultsample"
               docker build --build-arg base=$BASE \
                            --build-arg version=$VERSION \
-                           --build-arg branch=$BUILD_TYPE -f assemblyline_result_sample_service/Dockerfile -t $IMAGE:$TAG -t $IMAGE:$SERIES  -t $IMAGE:$BUILD_TYPE . | while read line ; do echo "$(date) | $line"; done;
+                           --build-arg branch=$BUILD_TYPE -t $IMAGE:$TAG -t $IMAGE:$SERIES -t $IMAGE:$BUILD_TYPE . -f assemblyline_result_sample_service/Dockerfile | while read line ; do echo "$(date) | $line"; done;
               docker push $IMAGE -q --all-tags
 
             workingDirectory: $(Pipeline.Workspace)/working
