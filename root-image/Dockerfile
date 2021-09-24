@@ -1,21 +1,5 @@
-FROM python:3.9-slim-buster AS base
-
-# Get required apt packages
-RUN apt-get update \
-  && apt-get install -yy libffi6 libfuzzy2 libmagic1 \
-  && rm -rf /var/lib/apt/lists/*
-
-FROM base as builder
-
-# Get required apt packages
-RUN apt-get update \
-  && apt-get install -yy build-essential libffi-dev libfuzzy-dev \
-  && rm -rf /var/lib/apt/lists/*
-
-# Install current versions of the assemblyline dependencies, but not the assemblyline package
-RUN pip install --no-cache-dir --user assemblyline && pip uninstall assemblyline -y
-
-FROM base
+ARG base
+FROM $base
 
 # Make sure root account is locked so 'su' commands fail all the time
 RUN passwd -l root
@@ -43,4 +27,3 @@ RUN mkdir -p /var/log/assemblyline
 RUN chmod 770 /var/log/assemblyline
 RUN chown assemblyline:assemblyline /var/log/assemblyline
 
-COPY --chown=assemblyline:assemblyline --from=builder /root/.local /var/lib/assemblyline/.local
