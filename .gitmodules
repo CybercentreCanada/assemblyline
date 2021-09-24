@@ -22,3 +22,7 @@
 	path = assemblyline-service-client
 	url = https://github.com/CybercentreCanada/assemblyline-service-client.git
 	branch = .
+[submodule "assemblyline-ui-frontend"]
+	path = assemblyline-ui-frontend
+	url = https://github.com/CybercentreCanada/assemblyline-ui-frontend.git
+	branch = .
