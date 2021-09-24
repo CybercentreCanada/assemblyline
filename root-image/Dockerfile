@@ -13,7 +13,7 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 # Install current versions of the assemblyline dependencies, but not the assemblyline package
-RUN pip install --no-cache-dir --user assemblyline && pip uninstall assemblyline
+RUN pip install --no-cache-dir --user assemblyline && pip uninstall assemblyline -y
 
 FROM base
 
