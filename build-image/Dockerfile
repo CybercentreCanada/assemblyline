@@ -1,3 +1,4 @@
+# Same as the root image, but we keep the dev dependencies
 ARG base
 ARG tag
 FROM $base:$tag
