@@ -1,0 +1,33 @@
+core:
+  alerter:
+    delay: 0
+  metrics:
+    apm_server:
+      server_url: http://localhost:8200/
+    elasticsearch:
+      hosts: ["localhost:9200"]
+    redis:
+      host: localhost
+  redis:
+    nonpersistent:
+      host: localhost
+      port: 6379
+    persistent:
+      host: localhost
+      port: 6379
+
+datastore:
+  hosts: ["localhost:9200"]
+
+filestore:
+  cache: ["s3://al_storage_key:Ch@ngeTh!sPa33w0rd@localhost:9000?s3_bucket=al-cache&use_ssl=False"]
+  storage: ["s3://al_storage_key:Ch@ngeTh!sPa33w0rd@localhost:9000?s3_bucket=al-storage&use_ssl=False"]
+
+logging:
+  log_level: DISABLED
+  log_to_console: false
+  log_to_file: false
+  log_to_syslog: false
+
+ui:
+  enforce_quota: false

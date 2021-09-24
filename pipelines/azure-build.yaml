@@ -359,7 +359,7 @@ stages:
 
               cd assemblyline-ui
               docker run -v `pwd`/test:/test \
-                         -v $(Pipeline.Workspace)/working/pipelines/base-config.yaml:/etc/assemblyline/config.yml \
+                         -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml \
                          -w /test \
                          --network host \
                          cccstemp.azurecr.io/assemblyline-socketio:${TAG} \
