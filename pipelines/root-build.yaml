@@ -1,0 +1,40 @@
+name: root-build
+
+schedules:
+- cron: "0 3 * * *"
+  displayName: Daily build
+  branches:
+    include:
+    # - master
+    - dev
+
+pool:
+  vmImage: "ubuntu-20.04"
+
+stages:
+  - stage: build
+    displayName: Build
+    jobs:
+      - job: build_root
+        dependsOn: []
+        displayName: Build Root Image
+        steps:
+          - task: Docker@2
+            displayName: Login to docker registry
+            inputs:
+              command: login
+              containerRegistry: cccstemp
+          - script: |
+              set -xv  # Echo commands before they are run
+              export BRANCH=${BUILD_SOURCEBRANCH#"refs/heads/"}
+              if [[ "$BRANCH" == *master* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
+
+              export IMAGE=cccstemp.azurecr.io/assemblyline-root
+              docker build --build-arg -t $IMAGE:$BUILD_TYPE root-image
+              docker push $IMAGE -q --all-tags
+
+              export BASE=$IMAGE
+              export IMAGE=cccstemp.azurecr.io/assemblyline-root-build
+              docker build --build-arg base=$BASE --build-arg tag=$BUILD_TYPE -t $IMAGE:$BUILD_TYPE build-image
+              docker push $IMAGE -q --all-tags
+            displayName: Build Frontend
