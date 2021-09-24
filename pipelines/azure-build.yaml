@@ -64,31 +64,32 @@ stages:
               # Build base
               cd assemblyline-base
               echo $VERSION > assemblyline/VERSION
-              python setup.py sdist --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/
+              python setup.py sdist --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ &
 
               # Build core
               cd ../assemblyline-core
               echo $VERSION > assemblyline_core/VERSION
-              python setup.py sdist --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/
+              python setup.py sdist --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ &
 
               # Build ui
               cd ../assemblyline-ui
               echo $VERSION > assemblyline_ui/VERSION
-              python setup.py bdist_wheel --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/
+              python setup.py bdist_wheel --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ &
 
               # Build service server
               cd ../assemblyline-service-server
               echo $VERSION > assemblyline_service_server/VERSION
-              python setup.py bdist_wheel --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/
+              python setup.py bdist_wheel --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ &
 
               cd ../assemblyline-service-client
               echo $VERSION > assemblyline_service_client/VERSION
-              python setup.py bdist_wheel --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/
+              python setup.py bdist_wheel --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ &
 
               cd ../assemblyline-v4-service
               echo $VERSION > assemblyline_v4_service/VERSION
-              python setup.py bdist_wheel --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/
+              python setup.py bdist_wheel --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ &
 
+              wait
               cd ../
               ls dist
             displayName: Build Python Packages
