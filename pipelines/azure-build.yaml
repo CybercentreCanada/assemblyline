@@ -145,6 +145,10 @@ stages:
               cd assemblyline-base
               mv ../dist/ dist
 
+              docker pull cccstemp.azurecr.io/assemblyline-root-build:$BUILD_TYPE &
+              docker pull cccstemp.azurecr.io/assemblyline-root:$BUILD_TYPE &
+              wait
+
               set +xv
               export IMAGE=cccstemp.azurecr.io/assemblyline
               # docker build --build-arg version=$VERSION -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES . | while read line ; do echo "$(date) | $line"; done;
