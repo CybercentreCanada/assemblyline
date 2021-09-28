@@ -513,8 +513,6 @@ stages:
     - job: deploy_base
       displayName: Deploy Base Image
       dependsOn: []
-      variables:
-        - group: deployment-information
       steps:
         - checkout: none
         - task: Docker@2
@@ -551,3 +549,237 @@ stages:
               docker push $IMAGE --all-tags
             done
           displayName: Deploy base Docker Hub
+    - job: deploy_core
+      displayName: Deploy Core Image
+      dependsOn: []
+      steps:
+        - checkout: none
+        - task: Docker@2
+          displayName: Login to docker hub
+          inputs:
+            command: login
+            containerRegistry: dockerhub
+        - task: Docker@2
+          displayName: Login to github packages
+          inputs:
+            command: login
+            containerRegistry: github-packages-sa
+        - task: Docker@2
+          displayName: Login to temp registry
+          inputs:
+            command: login
+            containerRegistry: cccstemp
+        - script: |
+            set -xv  # Echo commands before they are run
+            export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
+            if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
+            export VERSION=${TAG/stable}
+            export VERSION=${VERSION/beta/b}
+            export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
+
+            export BUILT_AS=cccstemp.azurecr.io/assemblyline-core:$TAG
+            docker pull $BUILT_AS
+
+            for IMAGE in "cccs/assemblyline-core" "docker.pkg.github.com/cybercentrecanada/assemblyline/assemblyline-core"
+            do
+              docker tag $BUILT_AS $IMAGE:$TAG
+              docker tag $BUILT_AS $IMAGE:$BUILD_TYPE
+              docker tag $BUILT_AS $IMAGE:$SERIES
+              docker push $IMAGE --all-tags
+            done
+          displayName: Deploy Core IMages
+    - job: deploy_ui
+      displayName: Deploy UI Image
+      dependsOn: []
+      steps:
+        - checkout: none
+        - task: Docker@2
+          displayName: Login to docker hub
+          inputs:
+            command: login
+            containerRegistry: dockerhub
+        - task: Docker@2
+          displayName: Login to github packages
+          inputs:
+            command: login
+            containerRegistry: github-packages-sa
+        - task: Docker@2
+          displayName: Login to temp registry
+          inputs:
+            command: login
+            containerRegistry: cccstemp
+        - script: |
+            set -xv  # Echo commands before they are run
+            export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
+            if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
+            export VERSION=${TAG/stable}
+            export VERSION=${VERSION/beta/b}
+            export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
+
+            export BUILT_AS=cccstemp.azurecr.io/assemblyline-ui:$TAG
+            docker pull $BUILT_AS
+
+            for IMAGE in "cccs/assemblyline-ui" "docker.pkg.github.com/cybercentrecanada/assemblyline/assemblyline-ui"
+            do
+              docker tag $BUILT_AS $IMAGE:$TAG
+              docker tag $BUILT_AS $IMAGE:$BUILD_TYPE
+              docker tag $BUILT_AS $IMAGE:$SERIES
+              docker push $IMAGE --all-tags
+            done
+          displayName: Deploy UI Images
+    - job: deploy_socketio
+      displayName: Deploy SocketIO Image
+      dependsOn: []
+      steps:
+        - checkout: none
+        - task: Docker@2
+          displayName: Login to docker hub
+          inputs:
+            command: login
+            containerRegistry: dockerhub
+        - task: Docker@2
+          displayName: Login to github packages
+          inputs:
+            command: login
+            containerRegistry: github-packages-sa
+        - task: Docker@2
+          displayName: Login to temp registry
+          inputs:
+            command: login
+            containerRegistry: cccstemp
+        - script: |
+            set -xv  # Echo commands before they are run
+            export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
+            if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
+            export VERSION=${TAG/stable}
+            export VERSION=${VERSION/beta/b}
+            export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
+
+            export BUILT_AS=cccstemp.azurecr.io/assemblyline-socketio:$TAG
+            docker pull $BUILT_AS
+
+            for IMAGE in "cccs/assemblyline-socketio" "docker.pkg.github.com/cybercentrecanada/assemblyline/assemblyline-socketio"
+            do
+              docker tag $BUILT_AS $IMAGE:$TAG
+              docker tag $BUILT_AS $IMAGE:$BUILD_TYPE
+              docker tag $BUILT_AS $IMAGE:$SERIES
+              docker push $IMAGE --all-tags
+            done
+          displayName: Deploy SocketIO Image
+    - job: deploy_service_server
+      displayName: Deploy Service Server Image
+      dependsOn: []
+      steps:
+        - checkout: none
+        - task: Docker@2
+          displayName: Login to docker hub
+          inputs:
+            command: login
+            containerRegistry: dockerhub
+        - task: Docker@2
+          displayName: Login to github packages
+          inputs:
+            command: login
+            containerRegistry: github-packages-sa
+        - task: Docker@2
+          displayName: Login to temp registry
+          inputs:
+            command: login
+            containerRegistry: cccstemp
+        - script: |
+            set -xv  # Echo commands before they are run
+            export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
+            if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
+            export VERSION=${TAG/stable}
+            export VERSION=${VERSION/beta/b}
+            export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
+
+            export BUILT_AS=cccstemp.azurecr.io/assemblyline-service-server:$TAG
+            docker pull $BUILT_AS
+
+            for IMAGE in "cccs/assemblyline-service-server" "docker.pkg.github.com/cybercentrecanada/assemblyline/assemblyline-service-server"
+            do
+              docker tag $BUILT_AS $IMAGE:$TAG
+              docker tag $BUILT_AS $IMAGE:$BUILD_TYPE
+              docker tag $BUILT_AS $IMAGE:$SERIES
+              docker push $IMAGE --all-tags
+            done
+          displayName: Deploy Service Server Image
+    - job: deploy_ui_frontend
+      displayName: Deploy UI Frontend Image
+      dependsOn: []
+      steps:
+        - checkout: none
+        - task: Docker@2
+          displayName: Login to docker hub
+          inputs:
+            command: login
+            containerRegistry: dockerhub
+        - task: Docker@2
+          displayName: Login to github packages
+          inputs:
+            command: login
+            containerRegistry: github-packages-sa
+        - task: Docker@2
+          displayName: Login to temp registry
+          inputs:
+            command: login
+            containerRegistry: cccstemp
+        - script: |
+            set -xv  # Echo commands before they are run
+            export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
+            if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
+            export VERSION=${TAG/stable}
+            export VERSION=${VERSION/beta/b}
+            export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
+
+            export BUILT_AS=cccstemp.azurecr.io/assemblyline-ui-frontend:$TAG
+            docker pull $BUILT_AS
+
+            for IMAGE in "cccs/assemblyline-ui-frontend" "docker.pkg.github.com/cybercentrecanada/assemblyline/assemblyline-ui-frontend"
+            do
+              docker tag $BUILT_AS $IMAGE:$TAG
+              docker tag $BUILT_AS $IMAGE:$BUILD_TYPE
+              docker tag $BUILT_AS $IMAGE:$SERIES
+              docker push $IMAGE --all-tags
+            done
+          displayName: Deploy Service Server Image
+    - job: deploy_v4_service
+      displayName: Deploy Service Base Image
+      dependsOn: []
+      steps:
+        - checkout: none
+        - task: Docker@2
+          displayName: Login to docker hub
+          inputs:
+            command: login
+            containerRegistry: dockerhub
+        - task: Docker@2
+          displayName: Login to github packages
+          inputs:
+            command: login
+            containerRegistry: github-packages-sa
+        - task: Docker@2
+          displayName: Login to temp registry
+          inputs:
+            command: login
+            containerRegistry: cccstemp
+        - script: |
+            set -xv  # Echo commands before they are run
+            export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
+            if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
+            export VERSION=${TAG/stable}
+            export VERSION=${VERSION/beta/b}
+            export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
+
+            export BUILT_AS=cccstemp.azurecr.io/assemblyline-assemblyline-v4-service-base:$TAG
+            docker pull $BUILT_AS
+
+            for IMAGE in "cccs/assemblyline-assemblyline-v4-service-base" "docker.pkg.github.com/cybercentrecanada/assemblyline/assemblyline-assemblyline-v4-service-base"
+            do
+              docker tag $BUILT_AS $IMAGE:$TAG
+              docker tag $BUILT_AS $IMAGE:$BUILD_TYPE
+              docker tag $BUILT_AS $IMAGE:$SERIES
+              docker push $IMAGE --all-tags
+            done
+          displayName: Deploy Service Base Image
