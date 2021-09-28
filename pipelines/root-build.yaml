@@ -5,7 +5,7 @@ schedules:
   displayName: Daily build
   branches:
     include:
-    # - master
+    - master
     - dev
 trigger: none
 pr: none
