@@ -772,10 +772,10 @@ stages:
             export VERSION=${VERSION/beta/b}
             export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
 
-            export BUILT_AS=cccstemp.azurecr.io/assemblyline-assemblyline-v4-service-base:$TAG
+            export BUILT_AS=cccstemp.azurecr.io/assemblyline-v4-service-base:$TAG
             docker pull $BUILT_AS
 
-            for IMAGE in "cccs/assemblyline-assemblyline-v4-service-base" "docker.pkg.github.com/cybercentrecanada/assemblyline/assemblyline-assemblyline-v4-service-base"
+            for IMAGE in "cccs/assemblyline-v4-service-base" "docker.pkg.github.com/cybercentrecanada/assemblyline/assemblyline-v4-service-base"
             do
               docker tag $BUILT_AS $IMAGE:$TAG
               docker tag $BUILT_AS $IMAGE:$BUILD_TYPE
