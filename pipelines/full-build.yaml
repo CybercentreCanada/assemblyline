@@ -405,6 +405,17 @@ stages:
                          /bin/bash -c "pip install -r requirements.txt; CI=1 pytest -rsx --durations=10"
             workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui
             displayName: Test UI
+          - script: |
+              mkdir logs
+              docker logs ui > logs/ui.log
+              docker logs socketsrv > logs/socketsrv.log
+              docker logs frontend > logs/frontend.log
+              docker logs nginx > logs/nginx.log
+            condition: failed()
+            displayName: Save Logs
+          - publish: $(System.DefaultWorkingDirectory)/logs
+            condition: succeeded()
+            artifact: ui-logs
 
       - job: test_service_server
         dependsOn: build_service_server
