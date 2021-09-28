@@ -482,12 +482,72 @@ stages:
     jobs:
     - job: deploy_python
       displayName: Deploy Python Packages
+      dependsOn: []
+      variables:
+        - group: deployment-information
       steps:
         - checkout: none
         - download: current
           artifact: working
         - script: |
+            set -xv  # Echo commands before they are run
+            sudo env "PATH=$PATH" python -m pip install --no-cache-dir twine
+            ls dist
+            twine upload --skip-existing --repository-url $TEST_REPOSITORY_URL dist/*
+          workingDirectory: $(Pipeline.Workspace)/working/
+          displayName: Deploy to Test PyPI
+          env:
+            TWINE_USERNAME: $(twineUsername)
+            TWINE_PASSWORD: $(twinePassword)
+        - script: |
+            set -xv  # Echo commands before they are run
+            sudo env "PATH=$PATH" python -m pip install --no-cache-dir twine
+            ls dist
+            twine upload --skip-existing dist/*
+          workingDirectory: $(Pipeline.Workspace)/working/
+          displayName: Deploy to PyPI
+          env:
+            TWINE_USERNAME: $(twineUsername)
+            TWINE_PASSWORD: $(twinePassword)
+
+    - job: deploy_base
+      displayName: Deploy Base Image
+      dependsOn: []
+      variables:
+        - group: deployment-information
+      steps:
+        - checkout: none
+        - task: Docker@2
+          displayName: Login to docker hub
+          inputs:
+            command: login
+            containerRegistry: dockerhub
+        - task: Docker@2
+          displayName: Login to github packages
+          inputs:
+            command: login
+            containerRegistry: github-packages-sa
+        - task: Docker@2
+          displayName: Login to temp registry
+          inputs:
+            command: login
+            containerRegistry: cccstemp
+        - script: |
+            set -xv  # Echo commands before they are run
             export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
-            echo "Fake deploy for now"
-          workingDirectory: $(Pipeline.Workspace)/working/dist
-          displayName: Deploy Python Packages
+            if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
+            export VERSION=${TAG/stable}
+            export VERSION=${VERSION/beta/b}
+            export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
+
+            export BUILT_AS=cccstemp.azurecr.io/assemblyline:$TAG
+            docker pull $BUILT_AS
+
+            for IMAGE in "cccs/assemblyline" "docker.pkg.github.com/cybercentrecanada/assemblyline/assemblyline"
+            do
+              docker tag $BUILT_AS $IMAGE:$TAG
+              docker tag $BUILT_AS $IMAGE:$BUILD_TYPE
+              docker tag $BUILT_AS $IMAGE:$SERIES
+              docker push $IMAGE --all-tags
+            done
+          displayName: Deploy base Docker Hub
