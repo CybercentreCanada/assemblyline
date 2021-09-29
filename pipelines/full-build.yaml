@@ -159,6 +159,7 @@ stages:
               export IMAGE=cccstemp.azurecr.io/assemblyline
               # docker build --build-arg version=$VERSION -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES . | while read line ; do echo "$(date) | $line"; done;
               docker build --build-arg version=$VERSION \
+                           --build-arg version_tag=$TAG \
                            --build-arg build_image=cccstemp.azurecr.io/assemblyline-root-build:$BUILD_TYPE \
                            --build-arg base=cccstemp.azurecr.io/assemblyline-root \
                            --build-arg tag=$BUILD_TYPE \
