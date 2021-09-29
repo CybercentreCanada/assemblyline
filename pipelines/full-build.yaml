@@ -63,8 +63,11 @@ stages:
               export VERSION=${VERSION/stable}
               export VERSION=${VERSION/beta/b}
 
-              # make sure we are on the right branches for all other repos
+              # Try to enable interactive git login, with the values provided by a shell function
+              export GIT_TERMINAL_PROMPT=1
               git config credential.helper '!f() { sleep 1; echo "username=${GIT_USERNAME}"; echo "password=${GIT_PASSWORD}"; }; f'
+
+              # make sure we are on the right branches for all other repos
               git submodule foreach git checkout -B $BRANCH --track origin/$BRANCH
               git submodule foreach git pull
               git submodule foreach git tag ${TAG}
