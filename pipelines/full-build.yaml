@@ -29,6 +29,11 @@ resources:
         MINIO_SECRET_KEY: Ch@ngeTh!sPa33w0rd
       ports:
         - 9000:9000
+  repositories:
+  - repository: BuildRepo
+    type: github
+    endpoint: github-repo-sa
+    name: CybercentreCanada/assemblyline
 
 stages:
   - stage: build
@@ -37,8 +42,9 @@ stages:
       - job: build_python
         displayName: Build Python Packages
         steps:
-          - checkout: self
+          - checkout: BuildRepo
             submodules: recursive
+            persistCredentials: true
           - task: UsePythonVersion@0
             displayName: Set python version
             inputs:
@@ -62,10 +68,6 @@ stages:
               echo "Building $VERSION On branch $BRANCH"
               export VERSION=${VERSION/stable}
               export VERSION=${VERSION/beta/b}
-
-              # Try to enable interactive git login, with the values provided by a shell function
-              export GIT_TERMINAL_PROMPT=1
-              git config credential.helper '!f() { sleep 1; echo "username=${GIT_USERNAME}"; echo "password=${GIT_PASSWORD}"; }; f'
 
               # make sure we are on the right branches for all other repos
               git submodule foreach git checkout -B $BRANCH --track origin/$BRANCH
@@ -106,9 +108,6 @@ stages:
               cd ../
               ls dist
             displayName: Build Python Packages
-            env:
-              GIT_USERNAME: $(GIT_USERNAME)
-              GIT_PASSWORD: $(GIT_PASSWORD)
           - publish: $(System.DefaultWorkingDirectory)
             artifact: working
 
