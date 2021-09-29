@@ -48,11 +48,17 @@ stages:
 
               # Figure out what the build kind is
               export VERSION=${BUILD_SOURCEBRANCH#"refs/tags/v"}
-              export COMMIT=`git rev-parse --verify ${BUILD_SOURCEBRANCH}`
-              export BRANCH=`git ls-remote --heads origin | grep $COMMIT | sed "s/.*\///"`
+              if [[ "$VERSION" == *stable* ]];
+              then
+                export BRANCH=master;
+              elif [[ "$VERSION" == *dev* ]];
+              then
+                export BRANCH=dev;
+              else
+                exit 1;
+              fi
+
               echo "Building $VERSION On branch $BRANCH"
-              if [[ "$VERSION" == *stable* ]] && [[ $BRANCH != "master" ]]; then exit 1; fi
-              if [[ "$VERSION" == *dev* ]] && [[ $BRANCH != "dev" ]]; then exit 1; fi
               export VERSION=${VERSION/stable}
               export VERSION=${VERSION/beta/b}
 
