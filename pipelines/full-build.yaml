@@ -64,6 +64,7 @@ stages:
               export VERSION=${VERSION/beta/b}
 
               # make sure we are on the right branches for all other repos
+              git config credential.helper '!f() { sleep 1; echo "username=${GIT_USERNAME}"; echo "password=${GIT_PASSWORD}"; }; f'
               git submodule foreach git checkout -B $BRANCH --track origin/$BRANCH
               git submodule foreach git pull
               git submodule foreach git tag ${TAG}
@@ -102,6 +103,9 @@ stages:
               cd ../
               ls dist
             displayName: Build Python Packages
+            env:
+              GIT_USERNAME: $(GIT_USERNAME)
+              GIT_PASSWORD: $(GIT_PASSWORD)
           - publish: $(System.DefaultWorkingDirectory)
             artifact: working
 
