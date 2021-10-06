@@ -50,8 +50,6 @@ stages:
             inputs:
               versionSpec: 3.9
           - script: |
-              set -x  # Echo commands before they are run
-
               # Figure out what the build kind is
               export TAG=${BUILD_SOURCEBRANCH#"refs/tags/"}
               export VERSION=${BUILD_SOURCEBRANCH#"refs/tags/v"}
@@ -70,6 +68,7 @@ stages:
               export VERSION=${VERSION/beta/b}
 
               # make sure we are on the right branches for all other repos
+              git config http.https://github.com.extraheader `git config --get http.https://github.com/CybercentreCanada/assemblyline.extraheader`
               git submodule foreach git checkout -B $BRANCH --track origin/$BRANCH
               git submodule foreach git pull
               git submodule foreach git tag ${TAG}
