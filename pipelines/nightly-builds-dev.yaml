@@ -5,7 +5,7 @@ schedules:
   displayName: Daily build
   branches:
     include:
-    - master
+    - dev
   always: true
 trigger: none
 pr: none
@@ -17,7 +17,7 @@ stages:
   - stage: build
     displayName: Build
     jobs:
-      - job: build_prod
+      - job: build_dev
         dependsOn: []
         displayName: Build Root Image
         steps:
@@ -31,8 +31,8 @@ stages:
               docker build -t common:local root-image -f root-image/common.Dockerfile
 
               export IMAGE=cccstemp.azurecr.io/assemblyline-root-build
-              export BUILD_TYPE=stable
-              
+              export BUILD_TYPE=latest
+
               docker build --build-arg base=common:local -t $IMAGE:$BUILD_TYPE build-image
               docker push $IMAGE -q --all-tags
 
