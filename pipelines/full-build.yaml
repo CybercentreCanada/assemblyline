@@ -16,7 +16,7 @@ resources:
       ports:
         - 6379:6379
     - container: elasticsearch
-      image: cccs/elasticsearch:7.8.0
+      image: cccs/elasticsearch:7.16.1
       env:
         ES_JAVA_OPTS: "-Xms256m -Xmx512m"
         DISCOVERY_TYPE: "single-node"
@@ -48,7 +48,7 @@ stages:
           - task: UsePythonVersion@0
             displayName: Set python version
             inputs:
-              versionSpec: 3.9
+              versionSpec: 3.10
           - script: |
               set -x  # Echo commands before they are run
 
