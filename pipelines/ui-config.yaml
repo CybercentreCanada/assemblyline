@@ -26,6 +26,7 @@ filestore:
 
 logging:
   log_level: INFO
+  log_as_json: false
   log_to_console: true
   log_to_file: false
   log_to_syslog: false
