@@ -4,6 +4,9 @@ filestore:
   storage:
     - file:///var/cache/assemblyline/
 core:
+  metrics:
+    apm_server:
+      server_url: null
   redis:
     nonpersistent:
       host: localhost
