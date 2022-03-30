@@ -1,8 +1,3 @@
-filestore:
-  cache:
-    - file:///var/cache/assemblyline/
-  storage:
-    - file:///var/cache/assemblyline/
 core:
   metrics:
     apm_server:
@@ -16,3 +11,10 @@ core:
       port: 6379
 datastore:
   hosts: ["localhost:9200"]
+filestore:
+  cache:
+    - file:///var/cache/assemblyline/
+  storage:
+    - file:///var/cache/assemblyline/
+logging:
+  log_as_json: false
