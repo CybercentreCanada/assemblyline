@@ -407,7 +407,7 @@ stages:
               docker run -d --name ui --network host -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml --restart on-failure cccstemp.azurecr.io/assemblyline-ui:$TAG &
               docker run -d --name socketsrv --network host -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml --restart on-failure cccstemp.azurecr.io/assemblyline-socketio:$TAG &
               docker run -d --name frontend --network host --restart on-failure cccstemp.azurecr.io/assemblyline-ui-frontend:$TAG &
-              docker run -d --name nginx --network host --restart on-failure -e "FRONTEND_HOST=localhost" -e "UI_HOST=localhost" -e "SOCKET_HOST=localhost" -e "TEMPLATE=minimal" -e "FQDN=localhost" cccs/nginx-ssl-frontend &
+              docker run -d --name nginx --network host --restart on-failure -e "FRONTEND_HOST=127.0.0.1" -e "UI_HOST=127.0.0.1" -e "SOCKET_HOST=127.0.0.1" -e "TEMPLATE=minimal" -e "FQDN=127.0.0.1" cccs/nginx-ssl-frontend &
               wait
 
               wget http://localhost:5000/healthz/ready --timeout=2 --retry-on-http-error=502 --retry-on-http-error=503 --waitretry=10 --retry-connrefused
