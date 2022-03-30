@@ -25,8 +25,8 @@ filestore:
   storage: ["s3://al_storage_key:Ch@ngeTh!sPa33w0rd@localhost:9000?s3_bucket=al-storage&use_ssl=False"]
 
 logging:
-  log_level: DISABLED
-  log_to_console: false
+  log_level: INFO
+  log_to_console: true
   log_to_file: false
   log_to_syslog: false
 
