@@ -846,12 +846,10 @@ stages:
     - job: update_odm_docs
       displayName: "Update Assemblyline4 Documentation"
       steps:
-        - checkout: BuildRepo
-          submodules: recursive
-          persistCredentials: true
-          path: $(Pipeline.Workspace)/assemblyline
+        - download: current
+          artifact: working
         - checkout: DocsRepo
-          path: $(Pipeline.Workspace)/assemblyline/assemblyline4_docs
+          path: $(Pipeline.Workspace)/working/assemblyline4_docs
 
         - script: |
             set -xv  # Echo commands before they are run
@@ -868,5 +866,5 @@ stages:
               git push
             fi
 
-          workingDirectory: $(Pipeline.Workspace)/assemblyline
+          workingDirectory: $(Pipeline.Workspace)/working/
           displayName: "Run script to generate documentation and commit changes"
