@@ -859,11 +859,13 @@ stages:
               # Generate documentation from script
               python gen_docs.py . "/assemblyline4_docs"
 
-              # Commit documentation changes to Documentation repo
+              # Commit documentation changes (if any) to Documentation repo
               cd assemblyline4_docs
-              git add .
-              git commit -m "Pipeline: Release $TAG documentation"
-              git push
+              if [[ `git status --porcelain` ]]; then
+                git add .
+                git commit -m "Pipeline: Release $TAG documentation"
+                git push
+              fi
             fi
 
           workingDirectory: $(Pipeline.Workspace)/working/
