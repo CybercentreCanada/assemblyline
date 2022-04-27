@@ -19,7 +19,7 @@ RUN chown assemblyline:assemblyline /var/cache/assemblyline
 
 # Create assemblyline home directory
 RUN mkdir -p /var/lib/assemblyline
-RUN chmod 770 /var/lib/assemblyline
+RUN chmod 750 /var/lib/assemblyline
 RUN chown assemblyline:assemblyline /var/lib/assemblyline
 
 # Create assemblyline log directory
