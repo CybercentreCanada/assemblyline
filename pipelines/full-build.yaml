@@ -34,6 +34,10 @@ resources:
     type: github
     endpoint: github-repo-sa
     name: CybercentreCanada/assemblyline
+  - repository: DocsRepo
+    type: github
+    endpoint: github-repo-sa
+    name: CybercentreCanada/assemblyline4_docs
 
 stages:
   - stage: build
@@ -839,3 +843,30 @@ stages:
               docker push $IMAGE --all-tags
             done
           displayName: Deploy Image
+    - job: update_odm_docs
+      displayName: "Update Assemblyline4 Documentation"
+      steps:
+        - download: current
+          artifact: working
+        - checkout: DocsRepo
+          path: $(Pipeline.Workspace)/working/assemblyline4_docs
+
+        - script: |
+            set -xv  # Echo commands before they are run
+            export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
+            if [[ "$TAG" == *stable* ]]
+            then
+              # Generate documentation from script
+              python gen_docs.py . "/assemblyline4_docs"
+
+              # Commit documentation changes (if any) to Documentation repo
+              cd assemblyline4_docs
+              if [[ `git status --porcelain` ]]; then
+                git add .
+                git commit -m "Pipeline: Release $TAG documentation"
+                git push
+              fi
+            fi
+
+          workingDirectory: $(Pipeline.Workspace)/working/
+          displayName: "Run script to generate documentation and commit changes"
