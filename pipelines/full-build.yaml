@@ -849,8 +849,6 @@ stages:
         - download: current
           artifact: working
         - checkout: DocsRepo
-          path: $(Pipeline.Workspace)/working/assemblyline4_docs
-
         - script: |
             set -xv  # Echo commands before they are run
             export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
