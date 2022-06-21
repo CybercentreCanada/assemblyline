@@ -853,8 +853,8 @@ stages:
         - script: |
             set -xv  # Echo commands before they are run
             export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
-            export PYTHONPATH=$PYTHONPATH:$(Pipeline.Workspace)/working/assemblyline-base
             cp -rf $(Agent.BuildDirectory)/assemblyline4_docs .
+            pip install $(Pipeline.Workspace)/working/assemblyline-base/
             # Generate documentation from script
             python gen_docs.py . "/assemblyline4_docs"
             if [[ "$TAG" == *stable* ]]
