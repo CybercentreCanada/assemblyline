@@ -849,14 +849,16 @@ stages:
         - download: current
           artifact: working
         - checkout: DocsRepo
+          path: assemblyline4_docs
         - script: |
             set -xv  # Echo commands before they are run
             export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
+            export PYTHONPATH=$PYTHONPATH:$(Pipeline.Workspace)/working/assemblyline-base
+            cp -rf $(Agent.BuildDirectory)/assemblyline4_docs .
+            # Generate documentation from script
+            python gen_docs.py . "/assemblyline4_docs"
             if [[ "$TAG" == *stable* ]]
             then
-              # Generate documentation from script
-              python gen_docs.py . "/assemblyline4_docs"
-
               # Commit documentation changes (if any) to Documentation repo
               cd assemblyline4_docs
               if [[ `git status --porcelain` ]]; then
