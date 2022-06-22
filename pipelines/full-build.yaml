@@ -845,6 +845,7 @@ stages:
           displayName: Deploy Image
     - job: update_odm_docs
       displayName: "Update Assemblyline4 Documentation"
+      dependsOn: deploy_python
       steps:
         - download: current
           artifact: working
@@ -854,7 +855,7 @@ stages:
             set -xv  # Echo commands before they are run
             export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
             cp -rf $(Agent.BuildDirectory)/assemblyline4_docs .
-            pip install $(Pipeline.Workspace)/working/assemblyline-base/
+            pip install assemblyline==$TAG
             # Generate documentation from script
             python gen_docs.py . "/assemblyline4_docs"
             if [[ "$TAG" == *stable* ]]
