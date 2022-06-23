@@ -849,14 +849,25 @@ stages:
         - download: current
           artifact: working
         - checkout: DocsRepo
+          path: assemblyline4_docs
+        - task: Docker@2
+          displayName: Login to temp registry
+          inputs:
+            command: login
+            containerRegistry: cccstemp
         - script: |
             set -xv  # Echo commands before they are run
             export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
+            cp -rf $(Agent.BuildDirectory)/assemblyline4_docs .
+            # Generate documentation from script
+            docker run -v $PWD/assemblyline4_docs:/tmp/assemblyline4_docs:rw \
+                       -v $PWD/assemblyline-base:/tmp/assemblyline-base:ro \
+                       -v $PWD/gen_docs.py:/tmp/gen_docs.py:ro \
+                       -w /tmp \
+                       cccstemp.azurecr.io/assemblyline:${TAG} \
+                       python gen_docs.py . "/assemblyline4_docs"
             if [[ "$TAG" == *stable* ]]
             then
-              # Generate documentation from script
-              python gen_docs.py . "/assemblyline4_docs"
-
               # Commit documentation changes (if any) to Documentation repo
               cd assemblyline4_docs
               if [[ `git status --porcelain` ]]; then
