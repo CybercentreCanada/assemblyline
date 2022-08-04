@@ -17,9 +17,6 @@ core:
       host: localhost
       port: 6379
 
-datastore:
-  hosts: ["http://elastic:devpass@localhost:9200"]
-
 filestore:
   cache: ["s3://al_storage_key:Ch@ngeTh!sPa33w0rd@localhost:9000?s3_bucket=al-cache&use_ssl=False"]
   storage: ["s3://al_storage_key:Ch@ngeTh!sPa33w0rd@localhost:9000?s3_bucket=al-storage&use_ssl=False"]
