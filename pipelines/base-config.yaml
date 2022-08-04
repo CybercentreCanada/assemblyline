@@ -9,8 +9,6 @@ core:
     persistent:
       host: localhost
       port: 6379
-datastore:
-  hosts: ["http://elastic:devpass@localhost:9200"]
 filestore:
   cache:
     - file:///var/cache/assemblyline/
