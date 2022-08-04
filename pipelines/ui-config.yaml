@@ -5,7 +5,7 @@ core:
     apm_server:
       server_url: null
     elasticsearch:
-      hosts: ["localhost:9200"]
+      hosts: ["http://elastic:devpass@localhost:9200"]
     redis:
       host: localhost
       port: 6379
@@ -18,7 +18,7 @@ core:
       port: 6379
 
 datastore:
-  hosts: ["localhost:9200"]
+  hosts: ["http://elastic:devpass@localhost:9200"]
 
 filestore:
   cache: ["s3://al_storage_key:Ch@ngeTh!sPa33w0rd@localhost:9000?s3_bucket=al-cache&use_ssl=False"]
