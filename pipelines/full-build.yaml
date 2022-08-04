@@ -35,6 +35,7 @@ resources:
     type: github
     endpoint: github-repo-sa
     name: CybercentreCanada/assemblyline
+    ref: '($Build.SourceBranchName)'
   - repository: DocsRepo
     type: github
     endpoint: github-repo-sa
