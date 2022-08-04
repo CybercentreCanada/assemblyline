@@ -20,6 +20,7 @@ resources:
       env:
         ES_JAVA_OPTS: "-Xms256m -Xmx512m"
         DISCOVERY_TYPE: "single-node"
+        ELASTIC_PASSWORD: "devpass"
       ports:
         - 9200:9200
     - container: minio
