@@ -860,7 +860,11 @@ stages:
         - script: |
             set -xv  # Echo commands before they are run
             export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
+  
+            # Prepare output directory
             cp -rf $(Agent.BuildDirectory)/assemblyline4_docs .
+            chmod -R a+rw ./assemblyline4_docs
+          
             # Generate documentation from script
             docker run -v $PWD/assemblyline4_docs:/tmp/assemblyline4_docs:rw \
                        -v $PWD/assemblyline-base:/tmp/assemblyline-base:ro \
