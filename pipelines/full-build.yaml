@@ -863,6 +863,7 @@ stages:
   
             # Prepare output directory
             cp -rf $(Agent.BuildDirectory)/assemblyline4_docs .
+            (cd assemblyline4_docs && git checkout master)
             chmod -R a+rw ./assemblyline4_docs
           
             # Generate documentation from script
@@ -871,7 +872,7 @@ stages:
                        -v $PWD/gen_docs.py:/tmp/gen_docs.py:ro \
                        -w /tmp \
                        cccstemp.azurecr.io/assemblyline:${TAG} \
-                       python gen_docs.py . "/assemblyline4_docs"
+                       /bin/bash -c 'pip install mkdocs-material==7.3.6 mkdocs-static-i18n && python gen_docs.py . "/assemblyline4_docs"'
             if [[ "$TAG" == *stable* ]]
             then
               # Commit documentation changes (if any) to Documentation repo
