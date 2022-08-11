@@ -879,6 +879,8 @@ stages:
               cd assemblyline4_docs
               if [[ `git status --porcelain` ]]; then
                 git add .
+                git config --global user.email "assemblyline@cyber.gc.ca"
+                git config --global user.name "Azure Pipeline"
                 git commit -m "Pipeline: Release $TAG documentation"
                 git push
               fi
