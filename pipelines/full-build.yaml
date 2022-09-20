@@ -586,7 +586,7 @@ stages:
             export BUILT_AS=cccstemp.azurecr.io/${CONTAINER_NAME}:$TAG
             docker pull $BUILT_AS
 
-            for IMAGE in "cccs/" "docker.pkg.github.com/cybercentrecanada/assemblyline/" "uchimera.azurecr.io/cybercentrecanada/"
+            for IMAGE in "cccs/" "docker.pkg.github.com/cybercentrecanada/assemblyline/" "uchimera.azurecr.io/cccs/"
             do
               docker tag $BUILT_AS ${IMAGE}${CONTAINER_NAME}:$TAG
               docker tag $BUILT_AS ${IMAGE}${CONTAINER_NAME}:$BUILD_TYPE
