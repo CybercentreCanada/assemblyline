@@ -516,16 +516,6 @@ stages:
             set -xv  # Echo commands before they are run
             sudo env "PATH=$PATH" python -m pip install --no-cache-dir twine
             ls dist
-            twine upload --skip-existing --repository-url $TEST_REPOSITORY_URL dist/*
-          workingDirectory: $(Pipeline.Workspace)/working/
-          displayName: Deploy to Test PyPI
-          env:
-            TWINE_USERNAME: $(twineUsername)
-            TWINE_PASSWORD: $(twinePassword)
-        - script: |
-            set -xv  # Echo commands before they are run
-            sudo env "PATH=$PATH" python -m pip install --no-cache-dir twine
-            ls dist
             twine upload --skip-existing dist/*
           workingDirectory: $(Pipeline.Workspace)/working/
           displayName: Deploy to PyPI
