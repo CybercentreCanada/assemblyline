@@ -9,6 +9,9 @@ core:
     persistent:
       host: localhost
       port: 6379
+datastore:
+  archive:
+    enabled: true
 filestore:
   cache:
     - file:///var/cache/assemblyline/
