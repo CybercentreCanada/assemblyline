@@ -1,0 +1,70 @@
+enforce: true
+dynamic_groups: false
+
+levels:
+  - aliases:
+      - UNRESTRICTED
+      - UNCLASSIFIED
+      - U
+      - TLP:W
+      - TLP:WHITE
+    css:
+      color: default
+    description: Subject to standard copyright rules, TLP:CLEAR information may be distributed without restriction.
+    lvl: 100
+    name: TLP:CLEAR
+    short_name: TLP:C
+  - aliases: []
+    css:
+      color: success
+    description:
+      Recipients may share TLP:GREEN information with peers and partner organizations
+      within their sector or community, but not via publicly accessible channels. Information
+      in this category can be circulated widely within a particular community. TLP:GREEN
+      information may not be released outside of the community.
+    lvl: 110
+    name: TLP:GREEN
+    short_name: TLP:G
+  - aliases: []
+    css:
+      color: warning
+    description:
+      Recipients may only share TLP:AMBER information with members of their
+      own organization and with clients or customers who need to know the information
+      to protect themselves or prevent further harm.
+    lvl: 120
+    name: TLP:AMBER
+    short_name: TLP:A
+  - aliases:
+      - RESTRICTED
+    css:
+      color: warning
+    description:
+      Recipients may only share TLP:AMBER+STRICT information with members of their
+      own organization.
+    lvl: 125
+    name: TLP:AMBER+STRICT
+    short_name: TLP:A+S
+
+required:
+  - aliases: []
+    description: Produced using a commercial tool with limited distribution
+    name: COMMERCIAL
+    short_name: CMR
+
+groups:
+  - aliases: []
+    auto_select: true
+    description: Employees of CSE
+    name: CSE
+    short_name: CSE
+
+subgroups:
+  - aliases: []
+    description: Member of the Canadian Centre for Cyber Security
+    require_group: CSE
+    name: CCCS
+    short_name: CCCS
+
+restricted: TLP:A+S//CMR//CSE/CCCS
+unrestricted: TLP:C
