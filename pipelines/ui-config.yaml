@@ -34,4 +34,3 @@ logging:
 
 ui:
   enforce_quota: false
-  external_sources: []
