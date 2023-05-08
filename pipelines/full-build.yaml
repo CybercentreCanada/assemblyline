@@ -334,7 +334,7 @@ stages:
               export IMAGE=cccstemp.azurecr.io/assemblyline-ui-plugin-lookup-malwarebazaar
               docker build --build-arg base=$BASE --build-arg version=$VERSION -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES ./malware_bazaar/. | while read line ; do echo "$(date) | $line"; done;
               docker push $IMAGE -q --all-tags
-              
+
               export IMAGE=cccstemp.azurecr.io/assemblyline-ui-plugin-lookup-virustotal
               docker build --build-arg base=$BASE --build-arg version=$VERSION -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES ./virustotal/. | while read line ; do echo "$(date) | $line"; done;
               docker push $IMAGE -q --all-tags
