@@ -325,6 +325,19 @@ stages:
               export IMAGE=cccstemp.azurecr.io/assemblyline-socketio
               docker build --build-arg base=$BASE --build-arg version=$VERSION --build-arg branch=$BUILD_TYPE -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES . -f docker/socketio/Dockerfile | while read line ; do echo "$(date) | $line"; done;
               docker push $IMAGE -q --all-tags
+
+              cd plugins/external_lookup
+              export IMAGE=cccstemp.azurecr.io/assemblyline-ui-plugin-lookup-assemblyline
+              docker build --build-arg base=$BASE --build-arg version=$VERSION -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES ./assemblyline_lookup/. | while read line ; do echo "$(date) | $line"; done;
+              docker push $IMAGE -q --all-tags
+
+              export IMAGE=cccstemp.azurecr.io/assemblyline-ui-plugin-lookup-malwarebazaar
+              docker build --build-arg base=$BASE --build-arg version=$VERSION -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES ./malware_bazaar/. | while read line ; do echo "$(date) | $line"; done;
+              docker push $IMAGE -q --all-tags
+
+              export IMAGE=cccstemp.azurecr.io/assemblyline-ui-plugin-lookup-virustotal
+              docker build --build-arg base=$BASE --build-arg version=$VERSION -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES ./virustotal/. | while read line ; do echo "$(date) | $line"; done;
+              docker push $IMAGE -q --all-tags
             workingDirectory: $(Pipeline.Workspace)/working
             displayName: Build UI
 
@@ -410,8 +423,8 @@ stages:
           - script: |
               export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
 
-              docker run -d --name ui --network host -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml --restart on-failure cccstemp.azurecr.io/assemblyline-ui:$TAG &
-              docker run -d --name socketsrv --network host -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml --restart on-failure cccstemp.azurecr.io/assemblyline-socketio:$TAG &
+              docker run -d --name ui --network host -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml -v $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml --restart on-failure cccstemp.azurecr.io/assemblyline-ui:$TAG &
+              docker run -d --name socketsrv --network host -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml -v $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml --restart on-failure cccstemp.azurecr.io/assemblyline-socketio:$TAG &
               docker run -d --name frontend --network host --restart on-failure cccstemp.azurecr.io/assemblyline-ui-frontend:$TAG &
               docker run -d --name nginx --network host --restart on-failure -e "FRONTEND_HOST=127.0.0.1" -e "UI_HOST=127.0.0.1" -e "SOCKET_HOST=127.0.0.1" -e "TEMPLATE=minimal" -e "FQDN=localhost" -e "ACCESS_LOG=/dev/stdout" -e "ERROR_LEVEL=info" cccs/nginx-ssl-frontend &
               wait
@@ -422,6 +435,7 @@ stages:
 
               docker run -v `pwd`/test:/test \
                          -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml \
+                         -v $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml \
                          -w /test \
                          --network host \
                          cccstemp.azurecr.io/assemblyline-socketio:${TAG} \
@@ -533,6 +547,12 @@ stages:
             CONTAINER_NAME: assemblyline-core
           UI:
             CONTAINER_NAME: assemblyline-ui
+          UI-plugin-lookup-assemblyline:
+            CONTAINER_NAME: assemblyline-ui-plugin-lookup-assemblyline
+          UI-plugin-lookup-malwarebazaar:
+            CONTAINER_NAME: assemblyline-ui-plugin-lookup-malwarebazaar
+          UI-plugin-lookup-virustotal:
+            CONTAINER_NAME: assemblyline-ui-plugin-lookup-virustotal
           UI-frontend:
             CONTAINER_NAME: assemblyline-ui-frontend
           SocketIO:
