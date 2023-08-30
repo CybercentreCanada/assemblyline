@@ -66,5 +66,5 @@ subgroups:
     name: CCCS
     short_name: CCCS
 
-restricted: TLP:A+S//CMR//CSE/CCCS
+restricted: TLP:A+S//CMR//CCCS/REL CSE
 unrestricted: TLP:C
