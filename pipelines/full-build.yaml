@@ -118,8 +118,25 @@ stages:
           - publish: $(System.DefaultWorkingDirectory)
             artifact: working
 
-      - job: build_frontend
+      - job: test_frontend
         dependsOn: build_python
+        timeoutInMinutes: 10
+        displayName: Test Frontend Code
+        env:
+          CI: "true"
+        steps:
+          - checkout: none
+          - download: current
+            artifact: working
+          - script: |
+              set -xv  # Echo commands before they are run
+              npm test
+
+            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend/
+            displayName: Test Frontend
+
+      - job: build_frontend
+        dependsOn: test_frontend
         displayName: Build Frontend Image
         steps:
           - checkout: none
