@@ -122,8 +122,6 @@ stages:
         dependsOn: build_python
         timeoutInMinutes: 10
         displayName: Test Frontend Code
-        env:
-          CI: "true"
         steps:
           - checkout: none
           - download: current
@@ -134,7 +132,8 @@ stages:
               versionSpec: 18.x
           - script: |
               set -xv  # Echo commands before they are run
-              npm test
+              yarn install
+              CI=true npm test
 
             workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend/
             displayName: Test Frontend
