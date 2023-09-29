@@ -56,7 +56,7 @@ stages:
             inputs:
               versionSpec: 3.9
           - script: |
-              set -x  # Echo commands before they are run
+              set -ex  # Echo commands before they are run
 
               # Figure out what the build kind is
               export TAG=${BUILD_SOURCEBRANCH#"refs/tags/"}
@@ -131,7 +131,7 @@ stages:
               command: login
               containerRegistry: cccstemp
           - script: |
-              set -xv  # Echo commands before they are run
+              set -exv  # Echo commands before they are run
               export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
               if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
               export VERSION=${TAG/stable}
@@ -157,7 +157,7 @@ stages:
               command: login
               containerRegistry: cccstemp
           - script: |
-              set -xv  # Echo commands before they are run
+              set -exv  # Echo commands before they are run
               export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
               if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
               export VERSION=${TAG/stable}
@@ -197,7 +197,7 @@ stages:
               command: login
               containerRegistry: cccstemp
           - script: |
-              set -xv  # Echo commands before they are run
+              set -exv  # Echo commands before they are run
               export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
               if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
               export VERSION=${TAG/stable}
@@ -230,7 +230,7 @@ stages:
               command: login
               containerRegistry: cccstemp
           - script: |
-              set -xv  # Echo commands before they are run
+              set -exv  # Echo commands before they are run
               export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
               if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
               export VERSION=${TAG/stable}
@@ -263,7 +263,7 @@ stages:
               command: login
               containerRegistry: cccstemp
           - script: |
-              set -xv  # Echo commands before they are run
+              set -exv  # Echo commands before they are run
               export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
               if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
               export VERSION=${TAG/stable}
@@ -305,7 +305,7 @@ stages:
               command: login
               containerRegistry: cccstemp
           - script: |
-              set -xv  # Echo commands before they are run
+              set -exv  # Echo commands before they are run
               export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
               if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
               export VERSION=${TAG/stable}
@@ -359,7 +359,7 @@ stages:
               command: login
               containerRegistry: cccstemp
           - script: |
-              set -xv  # Echo commands before they are run
+              set -exv  # Echo commands before they are run
               export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
 
               cd assemblyline-base
@@ -390,7 +390,7 @@ stages:
               command: login
               containerRegistry: cccstemp
           - script: |
-              set -xv  # Echo commands before they are run
+              set -exv  # Echo commands before they are run
               export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
 
               cd assemblyline-core
@@ -421,6 +421,7 @@ stages:
               command: login
               containerRegistry: cccstemp
           - script: |
+              set -e
               export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
 
               docker run -d --name ui --network host -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml -v $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml --restart on-failure cccstemp.azurecr.io/assemblyline-ui:$TAG &
@@ -473,6 +474,7 @@ stages:
               command: login
               containerRegistry: cccstemp
           - script: |
+              set -e
               export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
 
               docker run -d --name server --network host --restart on-failure cccstemp.azurecr.io/assemblyline-service-server:$TAG
@@ -504,6 +506,7 @@ stages:
               command: login
               containerRegistry: cccstemp
           - script: |
+              set -e
               export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
 
               docker run -v `pwd`/test:/test \
@@ -527,7 +530,7 @@ stages:
         - download: current
           artifact: working
         - script: |
-            set -xv  # Echo commands before they are run
+            set -exv  # Echo commands before they are run
             sudo env "PATH=$PATH" python -m pip install --no-cache-dir -U 'urllib3<2' twine
             ls dist
             twine upload --skip-existing dist/*
@@ -586,7 +589,7 @@ stages:
             command: login
             containerRegistry: CHIMERA-U-ACR
         - script: |
-            set -xv  # Echo commands before they are run
+            set -exv  # Echo commands before they are run
             export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
             if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
             export VERSION=${TAG/stable}
@@ -618,7 +621,7 @@ stages:
             command: login
             containerRegistry: cccstemp
         - script: |
-            set -xv  # Echo commands before they are run
+            set -exv  # Echo commands before they are run
             export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
 
             # Prepare output directory
