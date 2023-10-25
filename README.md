@@ -75,6 +75,17 @@
         </tr>
         <tr>
             <td>
+                <a href="https://github.com/CybercentreCanada/assemblyline-ui-frontend" target"_blank">Assemblyline UI Frontend</a>
+            </td>
+            <td>
+                <a href><img src="https://dev.azure.com/CybercentreCanada/Assemblyline/_apis/build/status%2Ftest%20-%20core%20components%2Fassemblyline-ui-frontend?branchName=master" alt="Main Branch Test Status"></a>
+            </td>
+            <td>
+                <a href><img src="https://dev.azure.com/CybercentreCanada/Assemblyline/_apis/build/status%2Ftest%20-%20core%20components%2Fassemblyline-ui-frontend?branchName=dev" alt="Dev Branch Test Status"></a>
+            </td>
+        </tr>
+        <tr>
+            <td>
                 <a href="https://github.com/CybercentreCanada/assemblyline-v4-service" target"_blank">Assemblyline Service Base</a>
             </td>
             <td>
