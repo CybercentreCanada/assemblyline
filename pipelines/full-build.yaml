@@ -15,7 +15,15 @@ resources:
       image: redis
       ports:
         - 6379:6379
-    - container: elasticsearch
+    - container: es7
+      image: cccs/elasticsearch:7.17.4
+      env:
+        ES_JAVA_OPTS: "-Xms256m -Xmx512m"
+        DISCOVERY_TYPE: "single-node"
+        ELASTIC_PASSWORD: "devpass"
+      ports:
+        - 9200:9200
+    - container: es8
       image: cccs/elasticsearch:8.10.2
       env:
         ES_JAVA_OPTS: "-Xms256m -Xmx512m"
@@ -345,8 +353,14 @@ stages:
         dependsOn: build_base
         displayName: Test Base Image
         timeoutInMinutes: 10
+        strategy:
+          matrix:
+            elasticsearch_7:
+              elasticsearch: es7
+            elasticsearch_8:
+              elasticsearch: es8
         services:
-          elasticsearch: elasticsearch
+          elasticsearch: $[ variables['elasticsearch'] ]
           redis: redis
           minio: minio
         steps:
