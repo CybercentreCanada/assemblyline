@@ -33,7 +33,7 @@ Documentation: https://cybercentrecanada.github.io/assemblyline4_docs/fr/
             <th>Repository Name</th>
             <th>Main Branch</th>
             <th>Dev Branch</th>
-            <th>PyPI Releases</th>
+            <th>PyPI Release</th>
         </tr>
         <tr>
             <td>
@@ -140,7 +140,7 @@ Documentation: https://cybercentrecanada.github.io/assemblyline4_docs/fr/
     <table>
         <tr>
             <th>Repository Name</th>
-            <th>PyPI Releases</th>
+            <th>PyPI Release</th>
         </tr>
         <tr>
             <td>
