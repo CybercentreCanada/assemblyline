@@ -391,7 +391,7 @@ stages:
         dependsOn: build_core
         timeoutInMinutes: 10
         services:
-          elasticsearch: elasticsearch
+          elasticsearch: es8
           redis: redis
         displayName: Test Core Image
         steps:
@@ -421,7 +421,7 @@ stages:
         dependsOn: ["build_ui", "build_frontend"]
         timeoutInMinutes: 10
         services:
-          elasticsearch: elasticsearch
+          elasticsearch: es8
           redis: redis
           minio: minio
         displayName: Test UI Image
@@ -474,7 +474,7 @@ stages:
         dependsOn: build_service_server
         timeoutInMinutes: 10
         services:
-          elasticsearch: elasticsearch
+          elasticsearch: es8
           redis: redis
           minio: minio
         displayName: Test Service Server Image
@@ -506,7 +506,7 @@ stages:
         dependsOn: build_service_base
         timeoutInMinutes: 10
         services:
-          elasticsearch: elasticsearch
+          elasticsearch: es8
           redis: redis
           minio: minio
         displayName: Test Service Base Image
