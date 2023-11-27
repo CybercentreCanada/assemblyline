@@ -649,6 +649,7 @@ stages:
               docker push ${IMAGE}${CONTAINER_NAME} --all-tags
             done
           displayName: Deploy base Docker Hub
+          retryCountOnTaskFailure: 3
     - job: update_odm_docs
       displayName: "Update Assemblyline4 Documentation"
       steps:
