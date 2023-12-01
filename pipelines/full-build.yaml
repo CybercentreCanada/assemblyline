@@ -578,6 +578,7 @@ stages:
             twine upload --skip-existing dist/*
           workingDirectory: $(Pipeline.Workspace)/working/
           displayName: Deploy to PyPI
+          retryCountOnTaskFailure: 3
           env:
             TWINE_USERNAME: $(twineUsername)
             TWINE_PASSWORD: $(twinePassword)
@@ -649,6 +650,7 @@ stages:
               docker push ${IMAGE}${CONTAINER_NAME} --all-tags
             done
           displayName: Deploy base Docker Hub
+          retryCountOnTaskFailure: 3
     - job: update_odm_docs
       displayName: "Update Assemblyline4 Documentation"
       steps:
@@ -693,3 +695,4 @@ stages:
 
           workingDirectory: $(Pipeline.Workspace)/working/
           displayName: "Run script to generate documentation and commit changes"
+          retryCountOnTaskFailure: 3
