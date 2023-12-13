@@ -27,12 +27,12 @@ stages:
               command: login
               containerRegistry: cccstemp
           - script: |
-              set -xv  # Echo commands before they are run
+              set -exv  # Echo commands before they are run
               docker build -t common:local root-image -f root-image/common.Dockerfile
 
               export IMAGE=cccstemp.azurecr.io/assemblyline-root-build
               export BUILD_TYPE=stable
-              
+
               docker build --build-arg base=common:local -t $IMAGE:$BUILD_TYPE build-image
               docker push $IMAGE -q --all-tags
 
