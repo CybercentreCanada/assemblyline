@@ -15,14 +15,16 @@ resources:
       image: redis
       ports:
         - 6379:6379
-    - container: elasticsearch
-      image: cccs/elasticsearch:8.10.2
+    - container: sftp
+      image: linuxserver/openssh-server
       env:
-        ES_JAVA_OPTS: "-Xms256m -Xmx512m"
-        DISCOVERY_TYPE: "single-node"
-        ELASTIC_PASSWORD: "devpass"
+        SUDO_ACCESS: "false"
+        PASSWORD_ACCESS: "true"
+        USER_PASSWORD: "password"
+        USER_NAME: "user"
+        LOG_STDOUT: "true"
       ports:
-        - 9200:9200
+        - 2222:2222
     - container: es7
       image: cccs/elasticsearch:7.17.4
       env:
@@ -389,6 +391,7 @@ stages:
               elasticsearch: es8
         services:
           elasticsearch: $[ variables['elasticsearch'] ]
+          sftp: sftp
           redis: redis
           minio: minio
         steps:
@@ -419,7 +422,7 @@ stages:
         dependsOn: build_core
         timeoutInMinutes: 10
         services:
-          elasticsearch: elasticsearch
+          elasticsearch: es8
           redis: redis
         displayName: Test Core Image
         steps:
@@ -449,7 +452,7 @@ stages:
         dependsOn: ["build_ui", "build_frontend"]
         timeoutInMinutes: 10
         services:
-          elasticsearch: elasticsearch
+          elasticsearch: es8
           redis: redis
           minio: minio
         displayName: Test UI Image
@@ -502,7 +505,7 @@ stages:
         dependsOn: build_service_server
         timeoutInMinutes: 10
         services:
-          elasticsearch: elasticsearch
+          elasticsearch: es8
           redis: redis
           minio: minio
         displayName: Test Service Server Image
@@ -534,7 +537,7 @@ stages:
         dependsOn: build_service_base
         timeoutInMinutes: 10
         services:
-          elasticsearch: elasticsearch
+          elasticsearch: es8
           redis: redis
           minio: minio
         displayName: Test Service Base Image
