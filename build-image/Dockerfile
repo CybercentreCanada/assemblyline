@@ -9,4 +9,4 @@ RUN apt-get update \
 
 # Install assemblyline dependencies, but don't keep assemblyline
 RUN pip install --user assemblyline && pip uninstall assemblyline -y
-RUN chmod 750 /root/.local/lib/python3.9/site-packages
+RUN chmod 750 /root/.local/lib/python3.11/site-packages
