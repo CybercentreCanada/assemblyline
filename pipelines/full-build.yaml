@@ -72,7 +72,7 @@ stages:
           - task: UsePythonVersion@0
             displayName: Set python version
             inputs:
-              versionSpec: 3.9
+              versionSpec: 3.11
           - script: |
               set -ex  # Echo commands before they are run
 
