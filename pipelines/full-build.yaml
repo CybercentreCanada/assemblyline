@@ -560,7 +560,7 @@ stages:
                          cccstemp.azurecr.io/assemblyline-v4-service-base:${TAG} \
                          /bin/bash -c "pip install -r requirements.txt; CI=1 pytest -rsx --durations=10"
             workingDirectory: $(Pipeline.Workspace)/working/assemblyline-v4-service
-            displayName: Test Service Server
+            displayName: Test Service Base
 
   - stage: deploy
     displayName: Deploy
