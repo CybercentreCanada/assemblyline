@@ -557,6 +557,7 @@ stages:
               docker run -v `pwd`/test:/test \
                          -v $(Pipeline.Workspace)/working/pipelines/base-config.yaml:/etc/assemblyline/config.yml \
                          -w /test \
+                         --network host \
                          cccstemp.azurecr.io/assemblyline-v4-service-base:${TAG} \
                          /bin/bash -c "pip install -r requirements.txt; CI=1 pytest -rsx --durations=10"
             workingDirectory: $(Pipeline.Workspace)/working/assemblyline-v4-service
