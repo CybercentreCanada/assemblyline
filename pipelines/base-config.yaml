@@ -17,5 +17,7 @@ filestore:
     - file:///var/cache/assemblyline/
   storage:
     - file:///var/cache/assemblyline/
+  archive:
+    - file:///var/cache/assemblyline/
 logging:
   log_as_json: false
