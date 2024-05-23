@@ -144,7 +144,7 @@ Documentation: https://cybercentrecanada.github.io/assemblyline4_docs/fr/
         </tr>
         <tr>
             <td>
-                <a href="https://github.com/CybercentreCanada/assemblyline-client">Assemblyline Client</a>
+                <a href="https://github.com/CybercentreCanada/assemblyline_client">Assemblyline Client</a>
             </td>
             <td>
                 <a href="https://pypi.org/project/assemblyline-client/#history"><img src="https://img.shields.io/pypi/v/assemblyline-client.svg" alt="Latest Stable Release"></a>
