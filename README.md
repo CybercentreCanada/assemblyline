@@ -7,6 +7,7 @@
 <div>
   <p align="center">
     <a href="https://discord.gg/GUAy9wErNu"><img src="https://img.shields.io/badge/chat-on%20discord-7289da.svg?sanitize=true" alt="Discord"></a>
+    <a href="https://discord.gg/GUAy9wErNu"><img src="https://img.shields.io/discord/908084610158714900"></a>
     <a href="./LICENCE.md"><img src="https://img.shields.io/github/license/CyberCentreCanada/assemblyline" alt="License"></a>
   </p>
 </div>
@@ -164,6 +165,14 @@ Documentation: https://cybercentrecanada.github.io/assemblyline4_docs/fr/
             </td>
             <td>
                 <a href="https://pypi.org/project/assemblyline-incident-manager/#history"><img src="https://img.shields.io/pypi/v/assemblyline-incident-manager.svg" alt="Latest Stable Release"></a>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <a href="https://github.com/CybercentreCanada/Multidecoder">Multidecoder</a>
+            </td>
+            <td>
+                <a href="https://pypi.org/project/multidecoder/#history"><img src="https://img.shields.io/pypi/v/multidecoder.svg" alt="Latest Stable Release"></a>
             </td>
         </tr>
     </table>
