@@ -151,10 +151,17 @@ stages:
           - script: |
               set -xv  # Echo commands before they are run
               yarn install
-              CI=true npm test
+              yarn run build-test
 
             workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend/
             displayName: Test Frontend
+          - script: |
+              set -xv  # Echo commands before they are run
+              yarn install
+              yarn run build-lint
+              
+            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend/
+            displayName: ESLint Frontend
 
       - job: build_frontend
         dependsOn: test_frontend
