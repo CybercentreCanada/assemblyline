@@ -32,5 +32,17 @@ logging:
   log_to_file: false
   log_to_syslog: false
 
+submission:
+  metadata:
+    ingest:
+      _default:
+        test:
+          validator_type: keyword
+          required: true
+      strict_ingest:
+        test:
+          validator_type: keyword
+    strict_schemes:
+      - strict_ingest
 ui:
   enforce_quota: false
