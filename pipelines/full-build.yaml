@@ -641,7 +641,7 @@ stages:
           displayName: Login to chimera
           inputs:
             command: login
-            containerRegistry: CHIMERA-U-ACR
+            containerRegistry: CHIMERA-U-ACR2
         - script: |
             set -exv  # Echo commands before they are run
             export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
