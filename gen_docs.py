@@ -32,7 +32,7 @@ def main(root_dir, site_prefix=None):
                 # Check if other models were part of the first render
                 for md, md_name in markdown_list:
                     # Add if missing
-                    if not re.search(f"# {md_name}\n>", compiled_md):
+                    if not re.search(f"# {md_name}\n", compiled_md):
                         compiled_md += f"\n\n{md}"
 
             doc_path = file.replace(BASE_PATH, DOCS_DOCS_PATH).replace(".py", ".md")
