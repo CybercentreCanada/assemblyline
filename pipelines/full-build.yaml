@@ -151,6 +151,13 @@ stages:
           - script: |
               set -xv  # Echo commands before they are run
               yarn install
+              yarn run tsc
+              
+            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend/
+            displayName: TypeScript Frontend
+          - script: |
+              set -xv  # Echo commands before they are run
+              yarn install
               yarn run build-test
 
             workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend/
@@ -162,13 +169,6 @@ stages:
               
             workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend/
             displayName: ESLint Frontend
-          - script: |
-              set -xv  # Echo commands before they are run
-              yarn install
-              yarn run tsc
-              
-            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend/
-            displayName: TypeScript Frontend
 
       - job: build_frontend
         dependsOn: test_frontend
