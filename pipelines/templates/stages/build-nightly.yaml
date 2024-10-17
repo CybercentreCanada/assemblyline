@@ -3,7 +3,7 @@ parameters:
     type: string
 
 variables:
-  ${{ if eq(parameters.build_type, "stable") }}:
+  ${{ if eq(parameters.build_type, 'stable') }}:
     job_type: Production
   ${{ else }}:
     job_type: Development
