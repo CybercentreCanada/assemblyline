@@ -33,7 +33,7 @@ jobs:
     variables:
       displayName: ${{ replace(parameters.component, 'assemblyline-', '') }}
       imageName: ${{ coalesce(parameters.imageName, parameters.component) }}
-      workingDirectory: ${{ coalesce(parameters.workingDirectory, "$(Pipeline.Workspace)/working/parameters.component)" }}
+      workingDirectory: ${{ coalesce(parameters.workingDirectory, join('/', [$(Pipeline.Workspace), 'working', parameters.component]) }}
     steps:
       - checkout: none
       - download: current
