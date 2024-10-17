@@ -26,15 +26,14 @@ parameters:
     type: string
     default: ""
 
-variables:
-  displayName: ${{ replace(parameters.component, 'assemblyline-', '') }}
-  imageName: ${{ coalesce(parameters.imageName, parameters.component) }}
-  workingDirectory: ${{ coalesce(parameters.workingDirectory, "$(Pipeline.Workspace)/working/parameters.component)" }}
-
 jobs:
   - job: build_${{ replace(variables.displayName, '-', '_') }}
     dependsOn: ${{ parameters.dependsOn }}
     displayName: Build ${{ variables.displayName }} Image
+    variables:
+      displayName: ${{ replace(parameters.component, 'assemblyline-', '') }}
+      imageName: ${{ coalesce(parameters.imageName, parameters.component) }}
+      workingDirectory: ${{ coalesce(parameters.workingDirectory, "$(Pipeline.Workspace)/working/parameters.component)" }}
     steps:
       - checkout: none
       - download: current
