@@ -1,0 +1,70 @@
+parameters:
+  # Base image for component image
+  - name: baseImage
+    type: string
+  # Component image to be built
+  - name: component
+    type: string
+  # Any dependencies before building image
+  - name: dependsOn
+    type: object
+    default: []
+  # Directory path
+  - name: buildContext
+    type: string
+    default: "."
+  # Relative path to Dockerfile to build the image
+  - name: dockerFile
+    type: string
+    default: "./Dockerfile"
+  # Acts as an explicit image name setting rather than to be derived from component
+  - name: imageName
+    type: string
+    default: ""
+  # Working directory
+  - name: workingDirectory
+    type: string
+    default: ""
+
+variables:
+  displayName: ${{ replace(parameters.component, 'assemblyline-', '') }}
+  imageName: ${{ coalesce(parameters.imageName, parameters.component) }}
+  workingDirectory: ${{ coalesce(parameters.workingDirectory, "$(Pipeline.Workspace)/working/parameters.component)" }}
+
+jobs:
+  - job: build_${{ replace(variables.displayName, '-', '_') }}
+    dependsOn: ${{ parameters.dependsOn }}
+    displayName: Build ${{ variables.displayName }} Image
+    steps:
+      - checkout: none
+      - download: current
+        artifact: working
+      - task: Docker@2
+        displayName: Login to docker registry
+        inputs:
+          command: login
+          containerRegistry: cccstemp
+      - script: |
+          set -exv  # Echo commands before they are run
+          export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
+          if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
+          export VERSION=${TAG/stable}
+          export VERSION=${VERSION/beta/b}
+          export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
+
+          if [ "${{ variables.workingDirectory }}" == *${{ parameters.component }} ]
+          then
+            mv ../dist/ dist
+          fi
+
+          export BASE=cccstemp.azurecr.io/${{ parameters.baseImage }}
+          export IMAGE=cccstemp.azurecr.io/${{ variables.imageName }}
+
+          docker build --build-arg base=$BASE \
+                        --build-arg version=$VERSION \
+                        --build-arg branch=$BUILD_TYPE \
+                        -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES \
+                        -f ${{ parameters.dockerFile }} ${{ parameters.buildContext }}
+          docker push $IMAGE -q --all-tags
+        workingDirectory: ${{ variables.workingDirectory }}
+        displayName: Build ${{ variables.displayName }}
