@@ -1,0 +1,39 @@
+parameters:
+  - name: build_type
+    type: string
+
+variables:
+  ${{ if eq(parameters.build_type, "stable") }}:
+    job_type: Production
+  ${{ else }}:
+    job_type: Development
+
+stages:
+  - stage: build
+    displayName: Build
+    jobs:
+      - job: build_${{ lower(parameters.build_type) }}
+        dependsOn: []
+        displayName: Build Root Image
+        steps:
+          - task: Docker@2
+            displayName: Login to docker registry
+            inputs:
+              command: login
+              containerRegistry: cccstemp
+          - script: |
+              set -exv  # Echo commands before they are run
+              docker build -t common:local root-image -f root-image/common.Dockerfile
+
+              export IMAGE=cccstemp.azurecr.io/assemblyline-root-build
+              export BUILD_TYPE=${{ parameters.build_type }}
+
+              docker build --build-arg base=common:local -t $IMAGE:$BUILD_TYPE build-image
+              docker push $IMAGE -q --all-tags
+
+              export IMAGE=cccstemp.azurecr.io/assemblyline-root
+              docker build --build-arg base=common:local -t $IMAGE:$BUILD_TYPE root-image
+              docker push $IMAGE -q --all-tags
+
+              export BASE=$IMAGE
+            displayName: Build ${{ variables.job_type }} Root Images
