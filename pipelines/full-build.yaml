@@ -25,15 +25,7 @@ resources:
         LOG_STDOUT: "true"
       ports:
         - 2222:2222
-    - container: es7
-      image: cccs/elasticsearch:7.17.4
-      env:
-        ES_JAVA_OPTS: "-Xms256m -Xmx512m"
-        DISCOVERY_TYPE: "single-node"
-        ELASTIC_PASSWORD: "devpass"
-      ports:
-        - 9200:9200
-    - container: es8
+    - container: elasticsearch
       image: cccs/elasticsearch:8.10.2
       env:
         ES_JAVA_OPTS: "-Xms256m -Xmx512m"
@@ -60,6 +52,7 @@ resources:
     name: CybercentreCanada/assemblyline4_docs
 
 stages:
+  ### BUILDING ###
   # Build Python packages
   - template: templates/stages/build-python.yaml
 
@@ -149,81 +142,29 @@ stages:
       imageName: assemblyline-ui-plugin-lookup-virustotal
       workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/plugins/external_lookup/virustotal
 
+
+  ### TESTING ###
   - stage: test
     dependsOn: [build_base, build_core, build_ui, build_frontend, build_service_server, build_v4_service_base]
     displayName: Test Containers
     jobs:
-      - job: test_base
-        displayName: Test Base Image
-        timeoutInMinutes: 10
-        strategy:
-          matrix:
-            elasticsearch_7:
-              elasticsearch: es7
-            elasticsearch_8:
-              elasticsearch: es8
-        services:
-          elasticsearch: $[ variables['elasticsearch'] ]
-          sftp: sftp
-          redis: redis
-          minio: minio
-        steps:
-          - checkout: none
-          - download: current
-            artifact: working
-          - task: Docker@2
-            displayName: Login to docker registry
-            inputs:
-              command: login
-              containerRegistry: cccstemp
-          - script: |
-              set -exv  # Echo commands before they are run
-              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
+      - template: templates/jobs/test-container.yaml
+        parameters:
+          imageName: assemblyline
+          workingDirectory: $(Pipeline.Workspace)/working/assemblyline-base
+          condition: in(stageDependencies.build_base.build_base.result, 'Succeeded')
 
-              cd assemblyline-base
-
-              docker run -v `pwd`/test:/test \
-                         -v $(Pipeline.Workspace)/working/pipelines/base-config.yaml:/etc/assemblyline/config.yml \
-                         -w /test \
-                         --network host \
-                         cccstemp.azurecr.io/assemblyline:${TAG} \
-                         /bin/bash -c "pip install -r requirements.txt; CI=1 pytest -rsx --durations=10"
-            workingDirectory: $(Pipeline.Workspace)/working
-            displayName: Test Base
-
-      - job: test_core
-        timeoutInMinutes: 10
-        services:
-          elasticsearch: es8
-          redis: redis
-        displayName: Test Core Image
-        steps:
-          - checkout: none
-          - download: current
-            artifact: working
-          - task: Docker@2
-            displayName: Login to docker registry
-            inputs:
-              command: login
-              containerRegistry: cccstemp
-          - script: |
-              set -exv  # Echo commands before they are run
-              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
-
-              cd assemblyline-core
-
-              docker run -v `pwd`/test:/test \
-                         -v $(Pipeline.Workspace)/working/pipelines/base-config.yaml:/etc/assemblyline/config.yml \
-                         -w /test \
-                         --network host \
-                         cccstemp.azurecr.io/assemblyline-core:${TAG} /bin/bash -c "pip install -r requirements.txt; CI=1 pytest -rsx --durations=10"
-            workingDirectory: $(Pipeline.Workspace)/working
-            displayName: Test Core
+      - template: templates/jobs/test-container.yaml
+        parameters:
+          imageName: assemblyline-core
+          workingDirectory: $(Pipeline.Workspace)/working/assemblyline-core
+          condition: in(stageDependencies.build_core.build_core.result, 'Succeeded')
 
       - job: test_ui
         timeoutInMinutes: 10
+        condition: and(in(stageDependencies.build_ui.build_ui.result, 'Succeeded'), in(stageDependencies.build_frontend.build_frontend.result, 'Succeeded'))
         services:
-          elasticsearch: es8
+          elasticsearch: elasticsearch
           redis: redis
           minio: minio
         displayName: Test UI Image
@@ -272,66 +213,22 @@ stages:
             condition: failed()
             displayName: NGINX Logs
 
-      - job: test_service_server
-        timeoutInMinutes: 10
-        services:
-          elasticsearch: es8
-          redis: redis
-          minio: minio
-        displayName: Test Service Server Image
-        steps:
-          - checkout: none
-          - download: current
-            artifact: working
-          - task: Docker@2
-            displayName: Login to docker registry
-            inputs:
-              command: login
-              containerRegistry: cccstemp
-          - script: |
-              set -e
-              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
+      - template: templates/jobs/test-container.yaml
+        parameters:
+          imageName: assemblyline-service-server
+          workingDirectory: $(Pipeline.Workspace)/working/assemblyline-service-server
+          condition: in(stageDependencies.build_service_server.build_service_server.result, 'Succeeded')
+          additionalSteps:
+            - script: |
+                docker run -d --name server --network host --restart on-failure cccstemp.azurecr.io/assemblyline-service-server:$TAG
 
-              docker run -d --name server --network host --restart on-failure cccstemp.azurecr.io/assemblyline-service-server:$TAG
+      - template: templates/jobs/test-container.yaml
+        parameters:
+          imageName: assemblyline-v4-service-base
+          workingDirectory: $(Pipeline.Workspace)/working/assemblyline-v4-service
+          condition: in(stageDependencies.build_v4_service_base.build_v4_service_base.result, 'Succeeded')
 
-              docker run -v `pwd`/test:/test \
-                         -v $(Pipeline.Workspace)/working/pipelines/base-config.yaml:/etc/assemblyline/config.yml \
-                         -w /test \
-                         --network host \
-                         cccstemp.azurecr.io/assemblyline-service-server:${TAG} \
-                         /bin/bash -c "pip install -r requirements.txt; CI=1 pytest -rsx --durations=10"
-            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-service-server
-            displayName: Test Service Server
-
-      - job: test_service_base
-        timeoutInMinutes: 10
-        services:
-          elasticsearch: es8
-          redis: redis
-          minio: minio
-        displayName: Test Service Base Image
-        steps:
-          - checkout: none
-          - download: current
-            artifact: working
-          - task: Docker@2
-            displayName: Login to docker registry
-            inputs:
-              command: login
-              containerRegistry: cccstemp
-          - script: |
-              set -e
-              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
-
-              docker run -v `pwd`/test:/test \
-                         -v $(Pipeline.Workspace)/working/pipelines/base-config.yaml:/etc/assemblyline/config.yml \
-                         -w /test \
-                         --network host \
-                         cccstemp.azurecr.io/assemblyline-v4-service-base:${TAG} \
-                         /bin/bash -c "pip install -r requirements.txt; CI=1 pytest -rsx --durations=10"
-            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-v4-service
-            displayName: Test Service Base
-
+  ### PUBLISHING ###
   - stage: deploy
     displayName: Deploy
     jobs:
