@@ -9,6 +9,9 @@ pr: none
 pool:
   vmImage: "ubuntu-20.04"
 
+variables:
+  RELEASE_TAG: ${{ replace(variables['Build.SourceBranch'], 'refs/tags/v', '') }}
+
 resources:
   containers:
     - container: redis

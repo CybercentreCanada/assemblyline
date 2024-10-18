@@ -31,6 +31,7 @@ jobs:
       - script: |
           set -exv  # Echo commands before they are run
           export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
+          echo "$RELEASE_TAG"
           export IMAGE=cccstemp.azurecr.io/${{ parameters.imageName }}
         workingDirectory: ${{ parameters.workingDirectory }}
         displayName: Setup Environment Variables
