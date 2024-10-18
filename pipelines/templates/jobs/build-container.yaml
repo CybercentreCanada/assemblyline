@@ -44,7 +44,7 @@ jobs:
           export VERSION=${VERSION/beta/b}
           export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
 
-          if [ "${{ parameters.workingDirectory }}" = *${{ parameters.component }} ]
+          if [[ "${{ parameters.workingDirectory }}" = *${{ parameters.component }} ]]
           then
             mv ../dist/ dist
           fi
