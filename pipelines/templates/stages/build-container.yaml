@@ -28,7 +28,7 @@ parameters:
 
 stages:
   - stage: build_${{ replace(replace(coalesce(parameters.imageName, parameters.component), 'assemblyline-', ''), '-', '_') }}
-    displayName: Build
+    displayName: Build ${{ replace(coalesce(parameters.imageName, parameters.component), 'assemblyline-', '') }}
     dependsOn: ${{ parameters.dependsOn }}
     variables:
       displayName: ${{ replace(parameters.imageName, 'assemblyline-', '') }}
