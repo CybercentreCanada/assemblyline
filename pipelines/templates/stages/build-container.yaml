@@ -27,7 +27,7 @@ parameters:
     default: ""
 
 stages:
-  - stage: build_${{ replace(parameters.component, 'assemblyline-', '') }}
+  - stage: build_${{ replace(replace(parameters.component, 'assemblyline-', ''), '-', '_') }}
     displayName: Build
     dependsOn: ${{ parameters.dependsOn }}
     variables:

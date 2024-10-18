@@ -77,13 +77,6 @@ stages:
       dependsOn: ["build_base"]
       dockerFile: deployment/Dockerfile
 
-  # Core
-  - template: templates/stages/build-container.yaml
-    parameters:
-      baseImage: assemblyline
-      component: assemblyline-core
-      dependsOn: ["build_base"]
-      dockerFile: deployment/Dockerfile
   # Service Server
   - template: templates/stages/build-container.yaml
     parameters:
@@ -160,6 +153,7 @@ stages:
       workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/plugins/external_lookup
 
   - stage: test
+    dependsOn: [build_base, build_core, build_ui, build_frontend, build_service_server, build_service_base]
     displayName: Test Containers
     jobs:
       - job: test_base
