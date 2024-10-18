@@ -1,0 +1,76 @@
+stages:
+  - stage: build_python
+    displayName: Build
+    jobs:
+      - job: build_python
+        displayName: Build Python Packages
+        steps:
+          - checkout: BuildRepo
+            submodules: recursive
+            persistCredentials: true
+          - task: UsePythonVersion@0
+            displayName: Set python version
+            inputs:
+              versionSpec: 3.11
+          - script: |
+              set -ex  # Echo commands before they are run
+
+              # Figure out what the build kind is
+              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/"}
+              export VERSION=${BUILD_SOURCEBRANCH#"refs/tags/v"}
+              if [[ "$VERSION" == *stable* ]];
+              then
+                export BRANCH=master;
+              elif [[ "$VERSION" == *dev* ]];
+              then
+                export BRANCH=dev;
+              else
+                exit 1;
+              fi
+
+              echo "Building $VERSION On branch $BRANCH"
+              export VERSION=${VERSION/stable}
+              export VERSION=${VERSION/beta/b}
+
+              # make sure we are on the right branches for all other repos
+              git config --global http.extraheader "`git config --get http.https://github.com/CybercentreCanada/assemblyline.extraheader`"
+              git submodule foreach git checkout -B $BRANCH --track origin/$BRANCH
+              git submodule foreach git pull
+              git submodule foreach git tag ${TAG}
+              git submodule foreach git push origin ${TAG}
+              sudo env "PATH=$PATH" python -m pip install --no-cache-dir -U wheel cython pip
+
+              # Build base
+              cd assemblyline-base
+              echo $VERSION > assemblyline/VERSION
+              python setup.py sdist --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ &
+
+              # Build core
+              cd ../assemblyline-core
+              echo $VERSION > assemblyline_core/VERSION
+              python setup.py sdist --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ &
+
+              # Build ui
+              cd ../assemblyline-ui
+              echo $VERSION > assemblyline_ui/VERSION
+              python setup.py bdist_wheel --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ &
+
+              # Build service server
+              cd ../assemblyline-service-server
+              echo $VERSION > assemblyline_service_server/VERSION
+              python setup.py bdist_wheel --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ &
+
+              cd ../assemblyline-service-client
+              echo $VERSION > assemblyline_service_client/VERSION
+              python setup.py bdist_wheel --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ &
+
+              cd ../assemblyline-v4-service
+              echo $VERSION > assemblyline_v4_service/VERSION
+              python setup.py bdist_wheel --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ &
+
+              wait
+              cd ../
+              ls dist
+            displayName: Build Python Packages
+          - publish: $(System.DefaultWorkingDirectory)
+            artifact: working

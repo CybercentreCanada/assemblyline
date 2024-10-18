@@ -5,10 +5,8 @@ parameters:
   # Component image to be built
   - name: component
     type: string
-  # Any dependencies before building image
-  - name: dependsOn
-    type: object
-    default: []
+  - name: displayName
+    type: string
   # Directory path
   - name: buildContext
     type: string
@@ -27,13 +25,8 @@ parameters:
     default: ""
 
 jobs:
-  - job: build_${{ replace(variables.displayName, '-', '_') }}
-    dependsOn: ${{ parameters.dependsOn }}
-    displayName: Build ${{ variables.displayName }} Image
-    variables:
-      displayName: ${{ replace(parameters.component, 'assemblyline-', '') }}
-      imageName: ${{ coalesce(parameters.imageName, parameters.component) }}
-      workingDirectory: ${{ coalesce(parameters.workingDirectory, '$(Pipeline.Workspace)/working/parameters.component') }}
+  - job: build_${{ replace(parameters.displayName, '-', '_') }}
+    displayName: Build ${{ parameters.displayName }} Image
     steps:
       - checkout: none
       - download: current
@@ -66,4 +59,4 @@ jobs:
                         -f ${{ parameters.dockerFile }} ${{ parameters.buildContext }}
           docker push $IMAGE -q --all-tags
         workingDirectory: ${{ variables.workingDirectory }}
-        displayName: Build ${{ variables.displayName }}
+        displayName: Build ${{ parameters.displayName }}

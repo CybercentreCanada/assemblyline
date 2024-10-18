@@ -1,0 +1,46 @@
+parameters:
+  # Base image for component image
+  - name: baseImage
+    type: string
+  # Component image to be built
+  - name: component
+    type: string
+  # Any dependencies before building image
+  - name: dependsOn
+    type: object
+    default: []
+  # Directory path
+  - name: buildContext
+    type: string
+    default: "."
+  # Relative path to Dockerfile to build the image
+  - name: dockerFile
+    type: string
+    default: "./Dockerfile"
+  # Acts as an explicit image name setting rather than to be derived from component
+  - name: imageName
+    type: string
+    default: ""
+  # Working directory
+  - name: workingDirectory
+    type: string
+    default: ""
+
+variables:
+  displayName: ${{ replace(parameters.component, 'assemblyline-', '') }}
+  imageName: ${{ coalesce(parameters.imageName, parameters.component) }}
+  workingDirectory: ${{ coalesce(parameters.workingDirectory, '$(Pipeline.Workspace)/working/parameters.component') }}
+
+stages:
+  - stage: build_${{ variables.displayName }}
+    displayName: Build
+    dependsOn: ${{ parameters.dependsOn }}
+    jobs:
+      - template: ../jobs/build-container.yaml
+        parameters:
+          baseImage: ${{ parameters.baseImage }}
+          buildContext: ${{ parameters.buildContext }}
+          component: ${{ parameters.component }}
+          dockerFile: ${{ parameters.dockerFile }}
+          imageName: ${{ variables.imageName }}
+          workingDirectory: ${{ variables.workingDirectory }}

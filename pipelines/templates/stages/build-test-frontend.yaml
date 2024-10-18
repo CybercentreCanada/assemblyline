@@ -1,0 +1,63 @@
+stages:
+  - stage: build_frontend
+    displayName: Build
+    dependsOn: build_python
+    jobs:
+      - job: test_frontend
+        timeoutInMinutes: 10
+        displayName: Test Frontend Code
+        steps:
+          - checkout: none
+          - download: current
+            artifact: working
+          - task: NodeTool@0
+            displayName: 'Use Node 18.x'
+            inputs:
+              versionSpec: 18.x
+          - script: |
+              set -xv  # Echo commands before they are run
+              yarn install
+              yarn run tsc
+
+            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend/
+            displayName: TypeScript Frontend
+          - script: |
+              set -xv  # Echo commands before they are run
+              yarn install
+              yarn run build-test
+
+            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend/
+            displayName: Test Frontend
+          - script: |
+              set -xv  # Echo commands before they are run
+              yarn install
+              yarn run build-lint
+
+            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend/
+            displayName: ESLint Frontend
+
+      - job: build_frontend
+        dependsOn: test_frontend
+        displayName: Build Frontend Image
+        steps:
+          - checkout: none
+          - download: current
+            artifact: working
+          - task: Docker@2
+            displayName: Login to docker registry
+            inputs:
+              command: login
+              containerRegistry: cccstemp
+          - script: |
+              set -exv  # Echo commands before they are run
+              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
+              if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
+              export VERSION=${TAG/stable}
+              export VERSION=${VERSION/beta/b}
+              export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
+
+              export IMAGE=cccstemp.azurecr.io/assemblyline-ui-frontend
+              docker build --build-arg version=$VERSION -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES .
+              docker push $IMAGE -q --all-tags
+            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend/
+            displayName: Build Frontend

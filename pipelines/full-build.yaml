@@ -60,264 +60,108 @@ resources:
     name: CybercentreCanada/assemblyline4_docs
 
 stages:
-  - stage: build
-    displayName: Build and Test
+  # Build Python packages
+  - template: templates/stages/build-python.yaml
+
+  # Build/Test Frontend
+  - template: templates/stages/build-test-frontend.yaml
+
+  # Build Base
+  - template: templates/stages/build-base.yaml
+
+  # Build Core
+  - template: templates/stages/build-container.yaml
+    parameters:
+      baseImage: assemblyline
+      component: assemblyline-core
+      dependsOn: ["build_base"]
+      dockerFile: deployment/Dockerfile
+
+  # Core
+  - template: templates/stages/build-container.yaml
+    parameters:
+      baseImage: assemblyline
+      component: assemblyline-core
+      dependsOn: ["build_base"]
+      dockerFile: deployment/Dockerfile
+  # Service Server
+  - template: templates/stages/build-container.yaml
+    parameters:
+      baseImage: assemblyline-core
+      component: assemblyline-service-server
+      dependsOn: ["build_core"]
+      dockerFile: docker/Dockerfile
+
+  # Service Base
+  - template: templates/stages/build-container.yaml
+    parameters:
+      baseImage: assemblyline
+      component: assemblyline-v4-service
+      dependsOn: ["build_base"]
+      dockerFile: docker/Dockerfile
+      imageName: assemblyline-v4-service-base
+
+
+  # ResultSample Service
+  - template: templates/stages/build-container.yaml
+    parameters:
+      baseImage: assemblyline-v4-service-base
+      component: assemblyline-v4-service
+      dependsOn: ["build_v4_service"]
+      dockerFile: assemblyline_result_sample_service/Dockerfile
+      imageName: assemblyline-service-resultsample
+
+  # UI (API)
+  - template: templates/stages/build-container.yaml
+    parameters:
+      baseImage: assemblyline
+      component: assemblyline-ui
+      dependsOn: ["build_base", "build_python"]
+      dockerFile: docker/ui/Dockerfile
+      imageName: assemblyline-ui
+
+  # SocketIO
+  - template: templates/stages/build-container.yaml
+    parameters:
+      baseImage: assemblyline
+      component: assemblyline-ui
+      dependsOn: ["build_base", "build_python"]
+      dockerFile: docker/socketio/Dockerfile
+      imageName: assemblyline-socketio
+
+  # External Lookup: Assemblyline
+  - template: templates/stages/build-container.yaml
+    parameters:
+      baseImage: assemblyline
+      component: assemblyline-ui
+      dependsOn: ["build_base", "build_python"]
+      imageName: assemblyline-ui-plugin-lookup-assemblyline
+      buildContext: ./assemblyline_lookup/.
+      workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/plugins/external_lookup
+
+  # External Lookup: MalwareBazaar
+  - template: templates/stages/build-container.yaml
+    parameters:
+      baseImage: assemblyline
+      component: assemblyline-ui
+      dependsOn: ["build_base", "build_python"]
+      imageName: assemblyline-ui-plugin-lookup-malwarebazaar
+      buildContext: ./malware_bazaar/.
+      workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/plugins/external_lookup
+
+  # External Lookup: VirusTotal
+  - template: templates/stages/build-container.yaml
+    parameters:
+      baseImage: assemblyline
+      component: assemblyline-ui
+      dependsOn: ["build_base", "build_python"]
+      imageName: assemblyline-ui-plugin-lookup-virustotal
+      buildContext: ./virustotal/.
+      workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/plugins/external_lookup
+
+  - stage: test
+    displayName: Test Containers
     jobs:
-      - job: build_python
-        displayName: Build Python Packages
-        steps:
-          - checkout: BuildRepo
-            submodules: recursive
-            persistCredentials: true
-          - task: UsePythonVersion@0
-            displayName: Set python version
-            inputs:
-              versionSpec: 3.11
-          - script: |
-              set -ex  # Echo commands before they are run
-
-              # Figure out what the build kind is
-              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/"}
-              export VERSION=${BUILD_SOURCEBRANCH#"refs/tags/v"}
-              if [[ "$VERSION" == *stable* ]];
-              then
-                export BRANCH=master;
-              elif [[ "$VERSION" == *dev* ]];
-              then
-                export BRANCH=dev;
-              else
-                exit 1;
-              fi
-
-              echo "Building $VERSION On branch $BRANCH"
-              export VERSION=${VERSION/stable}
-              export VERSION=${VERSION/beta/b}
-
-              # make sure we are on the right branches for all other repos
-              git config --global http.extraheader "`git config --get http.https://github.com/CybercentreCanada/assemblyline.extraheader`"
-              git submodule foreach git checkout -B $BRANCH --track origin/$BRANCH
-              git submodule foreach git pull
-              git submodule foreach git tag ${TAG}
-              git submodule foreach git push origin ${TAG}
-              sudo env "PATH=$PATH" python -m pip install --no-cache-dir -U wheel cython pip
-
-              # Build base
-              cd assemblyline-base
-              echo $VERSION > assemblyline/VERSION
-              python setup.py sdist --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ &
-
-              # Build core
-              cd ../assemblyline-core
-              echo $VERSION > assemblyline_core/VERSION
-              python setup.py sdist --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ &
-
-              # Build ui
-              cd ../assemblyline-ui
-              echo $VERSION > assemblyline_ui/VERSION
-              python setup.py bdist_wheel --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ &
-
-              # Build service server
-              cd ../assemblyline-service-server
-              echo $VERSION > assemblyline_service_server/VERSION
-              python setup.py bdist_wheel --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ &
-
-              cd ../assemblyline-service-client
-              echo $VERSION > assemblyline_service_client/VERSION
-              python setup.py bdist_wheel --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ &
-
-              cd ../assemblyline-v4-service
-              echo $VERSION > assemblyline_v4_service/VERSION
-              python setup.py bdist_wheel --dist-dir ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ &
-
-              wait
-              cd ../
-              ls dist
-            displayName: Build Python Packages
-          - publish: $(System.DefaultWorkingDirectory)
-            artifact: working
-
-      - job: test_frontend
-        dependsOn: build_python
-        timeoutInMinutes: 10
-        displayName: Test Frontend Code
-        steps:
-          - checkout: none
-          - download: current
-            artifact: working
-          - task: NodeTool@0
-            displayName: 'Use Node 18.x'
-            inputs:
-              versionSpec: 18.x
-          - script: |
-              set -xv  # Echo commands before they are run
-              yarn install
-              yarn run tsc
-
-            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend/
-            displayName: TypeScript Frontend
-          - script: |
-              set -xv  # Echo commands before they are run
-              yarn install
-              yarn run build-test
-
-            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend/
-            displayName: Test Frontend
-          - script: |
-              set -xv  # Echo commands before they are run
-              yarn install
-              yarn run build-lint
-
-            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend/
-            displayName: ESLint Frontend
-
-      - job: build_frontend
-        dependsOn: test_frontend
-        displayName: Build Frontend Image
-        steps:
-          - checkout: none
-          - download: current
-            artifact: working
-          - task: Docker@2
-            displayName: Login to docker registry
-            inputs:
-              command: login
-              containerRegistry: cccstemp
-          - script: |
-              set -exv  # Echo commands before they are run
-              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
-              if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
-              export VERSION=${TAG/stable}
-              export VERSION=${VERSION/beta/b}
-              export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
-
-              export IMAGE=cccstemp.azurecr.io/assemblyline-ui-frontend
-              docker build --build-arg version=$VERSION -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES .
-              docker push $IMAGE -q --all-tags
-            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend/
-            displayName: Build Frontend
-
-      - job: build_base
-        dependsOn: build_python
-        displayName: Build Base Image
-        steps:
-          - checkout: none
-          - download: current
-            artifact: working
-          - task: Docker@2
-            displayName: Login to docker registry
-            inputs:
-              command: login
-              containerRegistry: cccstemp
-          - script: |
-              set -exv  # Echo commands before they are run
-              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
-              if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
-              export VERSION=${TAG/stable}
-              export VERSION=${VERSION/beta/b}
-              export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
-
-              cd assemblyline-base
-              mv ../dist/ dist
-
-              docker pull cccstemp.azurecr.io/assemblyline-root-build:$BUILD_TYPE &
-              docker pull cccstemp.azurecr.io/assemblyline-root:$BUILD_TYPE &
-              wait
-
-              set +xv
-              export IMAGE=cccstemp.azurecr.io/assemblyline
-              # docker build --build-arg version=$VERSION -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES . | while read line ; do echo "$(date) | $line"; done;
-              docker build --build-arg version=$VERSION \
-                           --build-arg version_tag=$TAG \
-                           --build-arg build_image=cccstemp.azurecr.io/assemblyline-root-build:$BUILD_TYPE \
-                           --build-arg base=cccstemp.azurecr.io/assemblyline-root \
-                           --build-arg tag=$BUILD_TYPE \
-                           -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES . -f incremental.Dockerfile | while read line ; do echo "$(date) | $line"; done;
-              docker push $IMAGE -q --all-tags
-            workingDirectory: $(Pipeline.Workspace)/working
-            displayName: Build Base
-
-      # Core
-      - template: templates/jobs/build-container.yaml
-        parameters:
-          baseImage: assemblyline
-          component: assemblyline-core
-          dependsOn: ["build_base"]
-          dockerFile: deployment/Dockerfile
-      # Service Server
-      - template: templates/jobs/build-container.yaml
-        parameters:
-          baseImage: assemblyline-core
-          component: assemblyline-service-server
-          dependsOn: ["build_core"]
-          dockerFile: docker/Dockerfile
-
-      # Service Base
-      - template: templates/jobs/build-container.yaml
-        parameters:
-          baseImage: assemblyline
-          component: assemblyline-v4-service
-          dependsOn: ["build_base"]
-          dockerFile: docker/Dockerfile
-          imageName: assemblyline-v4-service-base
-
-
-      # ResultSample Service
-      - template: templates/jobs/build-container.yaml
-        parameters:
-          baseImage: assemblyline-v4-service-base
-          component: assemblyline-v4-service
-          dependsOn: ["build_v4_service"]
-          dockerFile: assemblyline_result_sample_service/Dockerfile
-          imageName: assemblyline-service-resultsample
-
-      # UI (API)
-      - template: templates/jobs/build-container.yaml
-        parameters:
-          baseImage: assemblyline
-          component: assemblyline-ui
-          dependsOn: ["build_base", "build_python"]
-          dockerFile: docker/ui/Dockerfile
-          imageName: assemblyline-ui
-
-      # SocketIO
-      - template: templates/jobs/build-container.yaml
-        parameters:
-          baseImage: assemblyline
-          component: assemblyline-ui
-          dependsOn: ["build_base", "build_python"]
-          dockerFile: docker/socketio/Dockerfile
-          imageName: assemblyline-socketio
-
-      # External Lookup: Assemblyline
-      - template: templates/jobs/build-container.yaml
-        parameters:
-          baseImage: assemblyline
-          component: assemblyline-ui
-          dependsOn: ["build_base", "build_python"]
-          imageName: assemblyline-ui-plugin-lookup-assemblyline
-          buildContext: ./assemblyline_lookup/.
-          workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/plugins/external_lookup
-
-      # External Lookup: MalwareBazaar
-      - template: templates/jobs/build-container.yaml
-        parameters:
-          baseImage: assemblyline
-          component: assemblyline-ui
-          dependsOn: ["build_base", "build_python"]
-          imageName: assemblyline-ui-plugin-lookup-malwarebazaar
-          buildContext: ./malware_bazaar/.
-          workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/plugins/external_lookup
-
-      # External Lookup: VirusTotal
-      - template: templates/jobs/build-container.yaml
-        parameters:
-          baseImage: assemblyline
-          component: assemblyline-ui
-          dependsOn: ["build_base", "build_python"]
-          imageName: assemblyline-ui-plugin-lookup-virustotal
-          buildContext: ./virustotal/.
-          workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/plugins/external_lookup
-
       - job: test_base
         dependsOn: build_base
         displayName: Test Base Image
