@@ -153,11 +153,10 @@ stages:
       workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/plugins/external_lookup
 
   - stage: test
-    dependsOn: [build_base, build_core, build_ui, build_frontend, build_service_server, build_service_base]
+    dependsOn: [build_base, build_core, build_ui, build_frontend, build_service_server, build_v4_service_base]
     displayName: Test Containers
     jobs:
       - job: test_base
-        dependsOn: build_base
         displayName: Test Base Image
         timeoutInMinutes: 10
         strategy:
@@ -196,7 +195,6 @@ stages:
             displayName: Test Base
 
       - job: test_core
-        dependsOn: build_core
         timeoutInMinutes: 10
         services:
           elasticsearch: es8
@@ -226,7 +224,6 @@ stages:
             displayName: Test Core
 
       - job: test_ui
-        dependsOn: ["build_ui", "build_frontend"]
         timeoutInMinutes: 10
         services:
           elasticsearch: es8
@@ -279,7 +276,6 @@ stages:
             displayName: NGINX Logs
 
       - job: test_service_server
-        dependsOn: build_service_server
         timeoutInMinutes: 10
         services:
           elasticsearch: es8
@@ -311,7 +307,6 @@ stages:
             displayName: Test Service Server
 
       - job: test_service_base
-        dependsOn: build_service_base
         timeoutInMinutes: 10
         services:
           elasticsearch: es8
