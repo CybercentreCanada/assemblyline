@@ -129,8 +129,7 @@ stages:
       component: assemblyline-ui
       dependsOn: ["build_base", "build_python"]
       imageName: assemblyline-ui-plugin-lookup-assemblyline
-      buildContext: ./assemblyline_lookup/.
-      workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/plugins/external_lookup
+      workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/plugins/external_lookup/assemblyline_lookup
 
   # External Lookup: MalwareBazaar
   - template: templates/stages/build-container.yaml
@@ -139,8 +138,7 @@ stages:
       component: assemblyline-ui
       dependsOn: ["build_base", "build_python"]
       imageName: assemblyline-ui-plugin-lookup-malwarebazaar
-      buildContext: ./malware_bazaar/.
-      workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/plugins/external_lookup
+      workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/plugins/external_lookup/malware_bazaar
 
   # External Lookup: VirusTotal
   - template: templates/stages/build-container.yaml
@@ -149,8 +147,7 @@ stages:
       component: assemblyline-ui
       dependsOn: ["build_base", "build_python"]
       imageName: assemblyline-ui-plugin-lookup-virustotal
-      buildContext: ./virustotal/.
-      workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/plugins/external_lookup
+      workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/plugins/external_lookup/virustotal
 
   - stage: test
     dependsOn: [build_base, build_core, build_ui, build_frontend, build_service_server, build_v4_service_base]

@@ -1,6 +1,6 @@
 stages:
   - stage: build_base
-    displayName: Build
+    displayName: Build Base
     dependsOn: build_python
     jobs:
       - job: build_base
