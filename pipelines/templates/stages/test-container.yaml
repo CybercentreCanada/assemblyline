@@ -3,10 +3,10 @@ parameters:
   - name: additionalSteps
     type: stepList
     default: []
-  # Component image to be built
+  # Component image to be tested
   - name: component
     type: string
-  # Any dependencies before building image
+  # Any dependencies before testing image
   - name: dependsOn
     type: object
     default: []
@@ -25,7 +25,7 @@ stages:
       workingDirectory: $(Pipeline.Workspace)/working/${{ parameters.component }}
 
     jobs:
-      - template: ../jobs/build-container.yaml
+      - template: ../jobs/test-container.yaml
         parameters:
           additionalSteps: ${{ parameters.additionalSteps }}
           imageName: ${{ variables.imageName }}
