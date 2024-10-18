@@ -26,15 +26,14 @@ parameters:
     type: string
     default: ""
 
-variables:
-  displayName: ${{ replace(parameters.component, 'assemblyline-', '') }}
-  imageName: ${{ coalesce(parameters.imageName, parameters.component) }}
-  workingDirectory: ${{ coalesce(parameters.workingDirectory, '$(Pipeline.Workspace)/working/parameters.component') }}
-
 stages:
-  - stage: build_${{ variables.displayName }}
+  - stage: build_${{ replace(parameters.component, 'assemblyline-', '') }}
     displayName: Build
     dependsOn: ${{ parameters.dependsOn }}
+    variables:
+      displayName: ${{ replace(parameters.component, 'assemblyline-', '') }}
+      imageName: ${{ coalesce(parameters.imageName, parameters.component) }}
+      workingDirectory: ${{ coalesce(parameters.workingDirectory, '$(Pipeline.Workspace)/working/parameters.component') }}
     jobs:
       - template: ../jobs/build-container.yaml
         parameters:
@@ -44,3 +43,4 @@ stages:
           dockerFile: ${{ parameters.dockerFile }}
           imageName: ${{ variables.imageName }}
           workingDirectory: ${{ variables.workingDirectory }}
+          displayName: ${{ variables.displayName }}
