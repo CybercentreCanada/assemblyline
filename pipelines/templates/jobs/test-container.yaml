@@ -10,13 +10,10 @@ parameters:
   - name: workingDirectory
     type: string
     default: ""
-  - name: condition
-    type: string
 
 jobs:
   - job: test_${{ replace(parameters.imageName, '-', '_') }}
     displayName: Test ${{ parameters.imageName }} Image
-    condition: ${{ parameters.condition }}
     services:
           elasticsearch: elasticsearch
           sftp: sftp
