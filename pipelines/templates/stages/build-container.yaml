@@ -33,10 +33,10 @@ stages:
     variables:
       displayName: ${{ replace(parameters.imageName, 'assemblyline-', '') }}
       imageName: ${{ coalesce(parameters.imageName, parameters.component) }}
-    ${{ if ne(parameters.workingDirectory, '') }}:
-      workingDirectory: ${{ parameters.workingDirectory }}
-    ${{ else }}:
-      workingDirectory: $(Pipeline.Workspace)/working/${{ parameters.component }}
+      ${{ if ne(parameters.workingDirectory, '') }}:
+        workingDirectory: ${{ parameters.workingDirectory }}
+      ${{ else }}:
+        workingDirectory: $(Pipeline.Workspace)/working/${{ parameters.component }}
 
     jobs:
       - template: ../jobs/build-container.yaml
