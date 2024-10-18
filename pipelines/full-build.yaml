@@ -144,88 +144,32 @@ stages:
 
 
   ### TESTING ###
-  - stage: test
-    displayName: Test Containers
-    jobs:
-      - template: templates/jobs/test-container.yaml
-        parameters:
-          imageName: assemblyline
-          workingDirectory: $(Pipeline.Workspace)/working/assemblyline-base
-          condition: in(stageDependencies.build_base.build_base.result, 'Succeeded')
+  - template: templates/stages/test-container.yaml
+    parameters:
+      imageName: assemblyline
+      component: assemblyline-base
+      dependsOn: [build_base]
 
-      - template: templates/jobs/test-container.yaml
-        parameters:
-          imageName: assemblyline-core
-          workingDirectory: $(Pipeline.Workspace)/working/assemblyline-core
-          condition: in(stageDependencies.build_core.build_core.result, 'Succeeded')
+  - template: templates/stages/test-container.yaml
+    parameters:
+      component: assemlbyline-core
+      dependsOn: [build_core]
 
-      - job: test_ui
-        timeoutInMinutes: 10
-        condition: and(in(stageDependencies.build_ui.build_ui.result, 'Succeeded'), in(stageDependencies.build_frontend.build_frontend.result, 'Succeeded'))
-        services:
-          elasticsearch: elasticsearch
-          redis: redis
-          minio: minio
-        displayName: Test UI Image
-        steps:
-          - checkout: none
-          - download: current
-            artifact: working
-          - task: Docker@2
-            displayName: Login to docker registry
-            inputs:
-              command: login
-              containerRegistry: cccstemp
-          - script: |
-              set -e
-              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
+  - template: templates/stages/test-ui.yaml
 
-              docker run -d --name ui --network host -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml -v $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml --restart on-failure cccstemp.azurecr.io/assemblyline-ui:$TAG &
-              docker run -d --name socketsrv --network host -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml -v $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml --restart on-failure cccstemp.azurecr.io/assemblyline-socketio:$TAG &
-              docker run -d --name frontend --network host --restart on-failure cccstemp.azurecr.io/assemblyline-ui-frontend:$TAG &
-              docker run -d --name nginx --network host --restart on-failure -e "FRONTEND_HOST=127.0.0.1" -e "UI_HOST=127.0.0.1" -e "SOCKET_HOST=127.0.0.1" -e "TEMPLATE=minimal" -e "FQDN=localhost" -e "ACCESS_LOG=/dev/stdout" -e "ERROR_LEVEL=info" cccs/nginx-ssl-frontend &
-              wait
+  - template: templates/stages/test-container.yaml
+    parameters:
+      component: assemblyline-service-server
+      dependsOn: [build_service_server]
+      additionalSteps:
+        - script: |
+            docker run -d --name server --network host --restart on-failure cccstemp.azurecr.io/assemblyline-service-server:$TAG
 
-              wget http://localhost:5000/healthz/ready --timeout=2 --retry-on-http-error=502 --retry-on-http-error=503 --waitretry=10 --retry-connrefused
-              wget http://localhost:5002/healthz/ready --timeout=2 --retry-on-http-error=502 --retry-on-http-error=503 --waitretry=10 --retry-connrefused
-              wget https://localhost --no-check-certificate --timeout=2 --retry-on-http-error=502 --waitretry=10 --retry-connrefused
-
-              docker run -v `pwd`/test:/test \
-                         -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml \
-                         -v $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml \
-                         -w /test \
-                         --network host \
-                         cccstemp.azurecr.io/assemblyline-socketio:${TAG} \
-                         /bin/bash -c "pip install -r requirements.txt; CI=1 pytest -rsx --durations=10"
-            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui
-            displayName: Test UI
-          - script: docker logs ui
-            condition: failed()
-            displayName: UI Logs
-          - script: docker logs socketsrv
-            condition: failed()
-            displayName: SocketIO Logs
-          - script: docker logs frontend
-            condition: failed()
-            displayName: Frontend Logs
-          - script: docker logs nginx
-            condition: failed()
-            displayName: NGINX Logs
-
-      - template: templates/jobs/test-container.yaml
-        parameters:
-          imageName: assemblyline-service-server
-          workingDirectory: $(Pipeline.Workspace)/working/assemblyline-service-server
-          condition: in(stageDependencies.build_service_server.build_service_server.result, 'Succeeded')
-          additionalSteps:
-            - script: |
-                docker run -d --name server --network host --restart on-failure cccstemp.azurecr.io/assemblyline-service-server:$TAG
-
-      - template: templates/jobs/test-container.yaml
-        parameters:
-          imageName: assemblyline-v4-service-base
-          workingDirectory: $(Pipeline.Workspace)/working/assemblyline-v4-service
-          condition: in(stageDependencies.build_v4_service_base.build_v4_service_base.result, 'Succeeded')
+  - template: templates/stages/test-container.yaml
+    parameters:
+      imageName: assemblyline-v4-service-base
+      component: assemblyline-v4-service
+      dependsOn: [build_v4_service_base]
 
   ### PUBLISHING ###
   - stage: deploy
