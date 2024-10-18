@@ -145,7 +145,6 @@ stages:
 
   ### TESTING ###
   - stage: test
-    dependsOn: [build_base, build_core, build_ui, build_frontend, build_service_server, build_v4_service_base]
     displayName: Test Containers
     jobs:
       - template: templates/jobs/test-container.yaml
