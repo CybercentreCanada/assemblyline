@@ -21,7 +21,6 @@ stages:
               containerRegistry: cccstemp
           - script: |
               set -e
-              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
 
               docker run -d --name ui --network host -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml -v $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml --restart on-failure cccstemp.azurecr.io/assemblyline-ui:$TAG &
               docker run -d --name socketsrv --network host -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml -v $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml --restart on-failure cccstemp.azurecr.io/assemblyline-socketio:$TAG &

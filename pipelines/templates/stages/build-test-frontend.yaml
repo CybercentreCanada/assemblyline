@@ -50,7 +50,6 @@ stages:
               containerRegistry: cccstemp
           - script: |
               set -exv  # Echo commands before they are run
-              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
               if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
               export VERSION=${TAG/stable}
               export VERSION=${VERSION/beta/b}

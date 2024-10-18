@@ -28,17 +28,12 @@ jobs:
         inputs:
           command: login
           containerRegistry: cccstemp
-      - script: |
-          set -exv  # Echo commands before they are run
-          export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
-          echo "$RELEASE_TAG"
-          export IMAGE=cccstemp.azurecr.io/${{ parameters.imageName }}
-        workingDirectory: ${{ parameters.workingDirectory }}
-        displayName: Setup Environment Variables
       # run any addtional steps specified
       - ${{ each step in parameters.additionalSteps }} :
         - ${{ step }}
       - script: |
+          set -exv  # Echo commands before they are run
+          export IMAGE=cccstemp.azurecr.io/${{ parameters.imageName }}
           docker run -v `pwd`/test:/test \
                       -v $(Pipeline.Workspace)/working/pipelines/base-config.yaml:/etc/assemblyline/config.yml \
                       -w /test \

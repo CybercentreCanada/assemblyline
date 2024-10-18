@@ -10,7 +10,7 @@ pool:
   vmImage: "ubuntu-20.04"
 
 variables:
-  RELEASE_TAG: ${{ replace(variables['Build.SourceBranch'], 'refs/tags/v', '') }}
+  TAG: ${{ replace(variables['Build.SourceBranch'], 'refs/tags/v', '') }}
 
 resources:
   containers:
@@ -249,7 +249,6 @@ stages:
             containerRegistry: CHIMERA-U-ACR2
         - script: |
             set -exv  # Echo commands before they are run
-            export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
             if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
             export VERSION=${TAG/stable}
             export VERSION=${VERSION/beta/b}
@@ -282,7 +281,6 @@ stages:
             containerRegistry: cccstemp
         - script: |
             set -exv  # Echo commands before they are run
-            export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
 
             # Prepare output directory
             cp -rf $(Agent.BuildDirectory)/assemblyline4_docs .
