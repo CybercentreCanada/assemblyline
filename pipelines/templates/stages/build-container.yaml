@@ -27,11 +27,11 @@ parameters:
     default: ""
 
 stages:
-  - stage: build_${{ replace(replace(parameters.assemblyline, 'assemblyline-', ''), '-', '_') }}
+  - stage: build_${{ replace(replace(parameters.imageName, 'assemblyline-', ''), '-', '_') }}
     displayName: Build
     dependsOn: ${{ parameters.dependsOn }}
     variables:
-      displayName: ${{ replace(parameters.assemblyline, 'assemblyline-', '') }}
+      displayName: ${{ replace(parameters.imageName, 'assemblyline-', '') }}
       imageName: ${{ coalesce(parameters.imageName, parameters.component) }}
       workingDirectory: ${{ coalesce(parameters.workingDirectory, '$(Pipeline.Workspace)/working/parameters.component') }}
     jobs:
