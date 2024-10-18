@@ -1,6 +1,6 @@
 stages:
   - stage: build_python
-    displayName: Build
+    displayName: Build Python Packages
     jobs:
       - job: build_python
         displayName: Build Python Packages
