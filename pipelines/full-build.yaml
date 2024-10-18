@@ -100,7 +100,7 @@ stages:
     parameters:
       baseImage: assemblyline-v4-service-base
       component: assemblyline-v4-service
-      dependsOn: ["build_v4_service"]
+      dependsOn: ["build_v4_service_base"]
       dockerFile: assemblyline_result_sample_service/Dockerfile
       imageName: assemblyline-service-resultsample
 
