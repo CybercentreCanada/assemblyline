@@ -155,7 +155,7 @@ stages:
 
   - template: templates/stages/test-container.yaml
     parameters:
-      component: assemlbyline-core
+      component: assemblyline-core
       dependsOn: [build_core]
 
   - template: templates/stages/test-ui.yaml
@@ -177,6 +177,7 @@ stages:
   ### PUBLISHING ###
   - stage: deploy
     displayName: Deploy
+    dependsOn: [test_base, test_core, test_ui, build_frontend, test_service_server, test_v4_service_base]
     jobs:
     - job: deploy_python
       displayName: Deploy Python Packages
@@ -257,13 +258,27 @@ stages:
             export BUILT_AS=cccstemp.azurecr.io/${CONTAINER_NAME}:$TAG
             docker pull $BUILT_AS
 
-            for IMAGE in "cccs/" "docker.pkg.github.com/cybercentrecanada/assemblyline/" "uchimera.azurecr.io/cccs/"
+            # Publish to public container registries
+            for IMAGE in "cccs/" "docker.pkg.github.com/cybercentrecanada/assemblyline/"
             do
               docker tag $BUILT_AS ${IMAGE}${CONTAINER_NAME}:$TAG
               docker tag $BUILT_AS ${IMAGE}${CONTAINER_NAME}:$BUILD_TYPE
               docker tag $BUILT_AS ${IMAGE}${CONTAINER_NAME}:$SERIES
               docker push ${IMAGE}${CONTAINER_NAME} --all-tags
             done
+
+            # Publish to private container registry (append labelling)
+            docker build -t $BUILT_AS -<<EOF
+            FROM $BUILT_AS
+            LABEL classification=UNCLASSIFIED
+            EOF
+
+            IMAGE=uchimera.azurecr.io/cccs/
+            docker tag $BUILT_AS ${IMAGE}${CONTAINER_NAME}:$TAG
+            docker tag $BUILT_AS ${IMAGE}${CONTAINER_NAME}:$BUILD_TYPE
+            docker tag $BUILT_AS ${IMAGE}${CONTAINER_NAME}:$SERIES
+            docker push ${IMAGE}${CONTAINER_NAME} --all-tags
+
           displayName: Deploy base Docker Hub
           retryCountOnTaskFailure: 3
     - job: update_odm_docs
