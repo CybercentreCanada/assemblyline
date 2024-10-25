@@ -1,0 +1,132 @@
+parameters:
+  # Repository name in DockerHub (usually has the same name as the Github repository)
+  - name: dockerhub_repo
+    type: string
+    default: ""
+  # Repository name in Github
+  - name: github_repo
+    type: string
+
+steps:
+  - bash: |
+      publish="false"
+      TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
+      if [[ "$TAG" == *stable* ]]; then
+        publish="true"
+      fi
+      echo "##vso[task.setvariable variable=publish;]$publish"
+    displayName: Check for stable
+
+  - task: UsePythonVersion@0
+    displayName: Set python version
+    inputs:
+      versionSpec: "3.11"
+    condition: and(succeeded(), eq(variables.publish, true))
+
+  - bash: pip install httpx
+    displayName: Install python requirements
+    condition: and(succeeded(), eq(variables.publish, true))
+
+  # requires env vars: DOCKERHUB_USERNAME and DOCKERHUB_PAT
+  - task: PythonScript@0
+    inputs:
+      scriptSource: "inline"
+      script: |
+        import httpx
+        import os
+
+        uname = os.environ["DOCKERHUB_USERNAME"]
+        pat = os.environ["DOCKERHUB_PAT"]
+        if not uname or not pat:
+          print("DOCKERHUB_USERNAME or DOCKERHUB_PAT is not defined... skipping")
+          exit()
+
+        rsp = httpx.post(
+          "https://hub.docker.com/v2/users/login/",
+          json={
+            "username": uname,
+            "password": pat,
+          },
+        )
+        rsp.raise_for_status()
+        tkn = rsp.json()["token"]
+
+        print(f"##vso[task.setvariable variable=tkn;issecret=true]{tkn}")
+    env:
+      DOCKERHUB_PAT: $(DOCKERHUB_PAT)
+    displayName: login to Dockerhub
+    condition: and(succeeded(), eq(variables.publish, true))
+
+  - task: PythonScript@0
+    inputs:
+      scriptSource: "inline"
+      script: |
+        import httpx
+        import os
+
+        git_repo = "${{ parameters.github_repo }}"
+        docker_repo ="${{ parameters.dockerhub_repo }}" or git_repo
+        readme_path = os.path.join(git_repo, "README.md")
+
+        if os.path.exists(readme_path):
+          with open(readme_path) as f:
+            body = {
+              "full_description": f.read(),
+            }
+
+        url = f"https://api.github.com/repos/CybercentreCanada/{git_repo}"
+        rsp = httpx.get(url)
+        body["description"] = rsp.json().get("description", "")
+
+        token = os.environ["TKN"]
+        headers = {
+          "Authorization": f"JWT {token}"
+        }
+
+        url = f"https://hub.docker.com/v2/namespaces/cccs/repositories/{docker_repo}"
+        print(f"{url=}")
+
+        rsp = httpx.patch(
+          url,
+          headers=headers,
+          json=body
+        )
+        rsp.raise_for_status()
+        print(rsp.text)
+      workingDirectory: $(Pipeline.Workspace)/working
+    env:
+      TKN: $(tkn)
+    displayName: Upload readme to dockerhub
+    condition: and(succeeded(), eq(variables.publish, true))
+
+  - task: PythonScript@0
+    inputs:
+      scriptSource: "inline"
+      script: |
+        import httpx
+        import os
+
+        token = os.environ["TKN"]
+        headers = {
+          "Authorization": f"JWT {token}"
+        }
+        body = [{
+          "slug": "security",
+          "name": "security"
+        }]
+        repo = "${{ parameters.dockerhub_repo }}" or "${{ parameters.github_repo }}"
+        url = f"https://hub.docker.com/v2/repositories/cccs/{repo}/categories/"
+        print(f"{url=}")
+
+        rsp = httpx.patch(
+          url,
+          headers=headers,
+          json=body
+        )
+        rsp.raise_for_status()
+        print(rsp.text)
+      workingDirectory: $(Pipeline.Workspace)/working
+    env:
+      TKN: $(tkn)
+    displayName: Update dockhub categories
+    condition: and(succeeded(), eq(variables.publish, true))

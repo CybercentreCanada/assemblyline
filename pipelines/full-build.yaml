@@ -202,10 +202,13 @@ stages:
     - job: deploy_containers
       displayName: Deploy Docker Image
       dependsOn: []
+      variables:
+        - group: "Dockerhub README"
       strategy:
         matrix:
           Base:
             CONTAINER_NAME: assemblyline
+            DIRECTORY: assemblyline-base
           Core:
             CONTAINER_NAME: assemblyline-core
           UI:
@@ -224,6 +227,7 @@ stages:
             CONTAINER_NAME: assemblyline-service-server
           Service-Base:
             CONTAINER_NAME: assemblyline-v4-service-base
+            DIRECTORY: assemblyline-v4-service
           Sample-Service:
             CONTAINER_NAME: assemblyline-service-resultsample
       steps:
@@ -248,6 +252,7 @@ stages:
           inputs:
             command: login
             containerRegistry: CHIMERA-U-ACR2
+        # Push to container registries
         - script: |
             set -exv  # Echo commands before they are run
             if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
@@ -281,6 +286,14 @@ stages:
 
           displayName: Deploy base Docker Hub
           retryCountOnTaskFailure: 3
+
+        # Publish image documentation to DockerHub
+        - template: ../steps/publish-description.yaml
+          parameters:
+            dockerhub_repo: ${CONTAINER_NAME}
+            github_repo: ${{ coalesce($DIRECTORY, $CONTAINER_NAME) }}
+
+
     - job: update_odm_docs
       displayName: "Update Assemblyline4 Documentation"
       steps:
