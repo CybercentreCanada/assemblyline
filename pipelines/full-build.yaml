@@ -288,7 +288,7 @@ stages:
           retryCountOnTaskFailure: 3
 
         # Publish image documentation to DockerHub
-        - template: ../steps/publish-description.yaml
+        - template: templates/steps/publish-description.yaml
           parameters:
             dockerhub_repo: $(CONTAINER_NAME)
             github_repo: $[ coalesce($(DIRECTORY), $(CONTAINER_NAME)) ]
