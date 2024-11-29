@@ -1,7 +1,7 @@
 stages:
   - stage: test_ui
     displayName: Test UI
-    dependsOn: build_ui
+    dependsOn: [build_ui, build_frontend]
     jobs:
       - job: test_ui
         timeoutInMinutes: 10
