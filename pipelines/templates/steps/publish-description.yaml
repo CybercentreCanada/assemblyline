@@ -9,7 +9,7 @@ parameters:
 
 steps:
   - bash: |
-      publish="false"
+      publish="true"
       TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
       if [[ "$TAG" == *stable* ]]; then
         publish="true"
@@ -68,6 +68,7 @@ steps:
         docker_repo ="${{ parameters.dockerhub_repo }}" or git_repo
         readme_path = os.path.join(git_repo, "README.md")
 
+        print(git_repo, docker_repo, readme_path)
         if os.path.exists(readme_path):
           with open(readme_path) as f:
             body = {
