@@ -81,8 +81,7 @@ steps:
               "full_description": f.read(),
             }
         else:
-          print(os.listdir("$(Pipeline.Workspace)/working"))
-          raise Exception(f"{readme_path} not found")
+          exit()
 
         url = f"https://api.github.com/repos/CybercentreCanada/{git_repo}"
         rsp = httpx.get(url)

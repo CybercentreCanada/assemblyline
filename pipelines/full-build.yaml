@@ -215,10 +215,16 @@ stages:
             CONTAINER_NAME: assemblyline-ui
           UI-plugin-lookup-assemblyline:
             CONTAINER_NAME: assemblyline-ui-plugin-lookup-assemblyline
+            DIRECTORY: assemblyline-ui
+            README_PATH: plugins/external_lookup/assemblyline_lookup
           UI-plugin-lookup-malwarebazaar:
             CONTAINER_NAME: assemblyline-ui-plugin-lookup-malwarebazaar
+            DIRECTORY: assemblyline-ui
+            README_PATH: plugins/external_lookup/malware_bazaar
           UI-plugin-lookup-virustotal:
             CONTAINER_NAME: assemblyline-ui-plugin-lookup-virustotal
+            DIRECTORY: assemblyline-ui
+            README_PATH: plugins/external_lookup/virustotal
           UI-frontend:
             CONTAINER_NAME: assemblyline-ui-frontend
           SocketIO:
@@ -231,6 +237,8 @@ stages:
             DIRECTORY: assemblyline-v4-service
           Sample-Service:
             CONTAINER_NAME: assemblyline-service-resultsample
+            DIRECTORY: assemblyline-v4-service
+            README_PATH: assemblyline-v4-service/assemblyline_result_sample_service/README.md
       steps:
         - checkout: none
         - task: Docker@2
@@ -295,6 +303,7 @@ stages:
           parameters:
             dockerhub_repo: $(CONTAINER_NAME)
             github_repo: $(github_repo)
+            readme
 
 
     - job: update_odm_docs
