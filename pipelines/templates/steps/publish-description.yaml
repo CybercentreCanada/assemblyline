@@ -57,6 +57,9 @@ steps:
     displayName: login to Dockerhub
     condition: and(succeeded(), eq(variables.publish, true))
 
+  - download: current
+    artifact: working
+
   - task: PythonScript@0
     inputs:
       scriptSource: "inline"
