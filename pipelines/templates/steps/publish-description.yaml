@@ -68,14 +68,14 @@ steps:
         docker_repo ="${{ parameters.dockerhub_repo }}" or git_repo
         readme_path = os.path.join("$(Pipeline.Workspace)/working", git_repo, "README.md")
 
-        print(git_repo, docker_repo, readme_path)
         if os.path.exists(readme_path):
           with open(readme_path) as f:
             body = {
               "full_description": f.read(),
             }
         else:
-          raise Exception(f"{__file__}:{readme_path} not found")
+          print(os.listdir("$(Pipeline.Workspace)/working"))
+          raise Exception(f"{readme_path} not found")
 
         url = f"https://api.github.com/repos/CybercentreCanada/{git_repo}"
         rsp = httpx.get(url)
