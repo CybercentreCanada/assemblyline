@@ -61,39 +61,7 @@ steps:
     inputs:
       scriptSource: "inline"
       script: |
-        import httpx
-        import os
-
-        git_repo = "${{ parameters.github_repo }}"
-        docker_repo ="${{ parameters.dockerhub_repo }}" or git_repo
-        readme_path = os.path.join(git_repo, "README.md")
-
-        print(git_repo, docker_repo, readme_path)
-        if os.path.exists(readme_path):
-          with open(readme_path) as f:
-            body = {
-              "full_description": f.read(),
-            }
-
-        url = f"https://api.github.com/repos/CybercentreCanada/{git_repo}"
-        rsp = httpx.get(url)
-        body["description"] = rsp.json().get("description", "")
-
-        token = os.environ["TKN"]
-        headers = {
-          "Authorization": f"JWT {token}"
-        }
-
-        url = f"https://hub.docker.com/v2/namespaces/cccs/repositories/{docker_repo}"
-        print(f"{url=}")
-
-        rsp = httpx.patch(
-          url,
-          headers=headers,
-          json=body
-        )
-        rsp.raise_for_status()
-        print(rsp.text)
+        print("TEST")
       workingDirectory: $(Pipeline.Workspace)/working
     env:
       TKN: $(tkn)
