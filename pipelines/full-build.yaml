@@ -55,9 +55,9 @@ resources:
     name: CybercentreCanada/assemblyline4_docs
 
 stages:
-  # ### BUILDING ###
-  # # Build Python packages
-  # - template: templates/stages/build-python.yaml
+  ### BUILDING ###
+  # Build Python packages
+  - template: templates/stages/build-python.yaml
 
   # # Build/Test Frontend
   # - template: templates/stages/build-test-frontend.yaml
