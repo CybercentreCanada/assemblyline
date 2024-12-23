@@ -223,6 +223,7 @@ stages:
             CONTAINER_NAME: assemblyline-ui-frontend
           SocketIO:
             CONTAINER_NAME: assemblyline-socketio
+            DIRECTORY: assemblyline-ui
           Service-Server:
             CONTAINER_NAME: assemblyline-service-server
           Service-Base:
