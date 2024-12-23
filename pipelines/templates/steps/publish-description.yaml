@@ -74,6 +74,8 @@ steps:
             body = {
               "full_description": f.read(),
             }
+        else:
+          raise Exception(f"{__file__}:{readme_path} not found")
 
         url = f"https://api.github.com/repos/CybercentreCanada/{git_repo}"
         rsp = httpx.get(url)
