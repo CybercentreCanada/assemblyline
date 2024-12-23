@@ -291,7 +291,7 @@ stages:
         - template: templates/steps/publish-description.yaml
           parameters:
             dockerhub_repo: $(CONTAINER_NAME)
-            github_repo: $[ coalesce($(DIRECTORY), $(CONTAINER_NAME)) ]
+            github_repo: $( coalesce($(DIRECTORY), $(CONTAINER_NAME)) )
 
 
     - job: update_odm_docs
