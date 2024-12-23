@@ -6,6 +6,10 @@ parameters:
   # Repository name in Github
   - name: github_repo
     type: string
+  # Path to the README file in the artifact
+  - name: readme_path
+    type: string
+    default: "README.md"
 
 steps:
   - bash: |
@@ -69,7 +73,7 @@ steps:
 
         git_repo = "${{ parameters.github_repo }}"
         docker_repo ="${{ parameters.dockerhub_repo }}" or git_repo
-        readme_path = os.path.join("$(Pipeline.Workspace)/working", git_repo, "README.md")
+        readme_path = os.path.join("$(Pipeline.Workspace)/working", git_repo, "${{ parameters.readme_path }}R")
 
         if os.path.exists(readme_path):
           with open(readme_path) as f:
