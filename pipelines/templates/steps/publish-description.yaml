@@ -82,7 +82,9 @@ steps:
 
         url = f"https://api.github.com/repos/CybercentreCanada/{git_repo}"
         rsp = httpx.get(url)
-        body["description"] = rsp.json().get("description", "")
+        desc = rsp.json().get("description", "")
+        if desc and len(desc) < 100:
+            body["description"] = desc
 
         token = os.environ["TKN"]
         headers = {
