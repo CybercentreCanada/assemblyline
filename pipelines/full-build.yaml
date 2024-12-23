@@ -251,7 +251,7 @@ stages:
           displayName: Login to chimera
           inputs:
             command: login
-            containerRegistry: CHIMERA-U-ACR2
+            containerRegistry: CHIMERA-U-ACR
         # Push to container registries
         - script: |
             set -exv  # Echo commands before they are run
