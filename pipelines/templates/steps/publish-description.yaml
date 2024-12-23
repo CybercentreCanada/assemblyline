@@ -9,7 +9,6 @@ parameters:
   # Path to the README file in the artifact
   - name: readme_path
     type: string
-    default: "README.md"
 
 steps:
   - bash: |
