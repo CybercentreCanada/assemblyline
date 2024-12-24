@@ -72,7 +72,10 @@ steps:
 
         git_repo = "${{ parameters.github_repo }}"
         docker_repo ="${{ parameters.dockerhub_repo }}" or git_repo
-        readme_path = os.path.join("$(Pipeline.Workspace)/working", git_repo, "${{ parameters.readme_path }}R")
+        readme = "${{ parameters.readme_path }}"
+        if not readme
+          readme = "README.md"
+        readme_path = os.path.join("$(Pipeline.Workspace)/working", git_repo, readme)
 
         if os.path.exists(readme_path):
           with open(readme_path) as f:

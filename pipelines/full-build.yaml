@@ -297,14 +297,13 @@ stages:
         #   retryCountOnTaskFailure: 3
 
         - script: |
-            echo "##vso[task.setvariable variable=github_repo;isreadonly=true]${DIRECTORY:-${CONTAINER_NAME}}"
-            echo "##vso[task.setvariable variable=readme_path;]${README_PATH:-${echo -n "README.md"}}"
+            echo "##vso[task.setvariable variable=github_repo;isreadonly=true]${DIRECTORY:-${CONTAINER_NAME}}""
         # Publish image documentation to DockerHub
         - template: templates/steps/publish-description.yaml
           parameters:
             dockerhub_repo: $(CONTAINER_NAME)
             github_repo: $(github_repo)
-            readme_path: $(readme_path)
+            readme_path: $(README_PATH)
 
 
     - job: update_odm_docs
