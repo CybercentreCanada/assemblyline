@@ -297,7 +297,7 @@ stages:
         #   retryCountOnTaskFailure: 3
 
         - script: |
-            echo "##vso[task.setvariable variable=github_repo;isreadonly=true]${DIRECTORY:-${CONTAINER_NAME}}""
+            echo "##vso[task.setvariable variable=github_repo;isreadonly=true]${DIRECTORY:-${CONTAINER_NAME}}"
         # Publish image documentation to DockerHub
         - template: templates/steps/publish-description.yaml
           parameters:
