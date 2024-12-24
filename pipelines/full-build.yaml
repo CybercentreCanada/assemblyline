@@ -216,15 +216,15 @@ stages:
           UI-plugin-lookup-assemblyline:
             CONTAINER_NAME: assemblyline-ui-plugin-lookup-assemblyline
             DIRECTORY: assemblyline-ui
-            README_PATH: plugins/external_lookup/assemblyline_lookup
+            README_PATH: plugins/external_lookup/assemblyline_lookup/README.md
           UI-plugin-lookup-malwarebazaar:
             CONTAINER_NAME: assemblyline-ui-plugin-lookup-malwarebazaar
             DIRECTORY: assemblyline-ui
-            README_PATH: plugins/external_lookup/malware_bazaar
+            README_PATH: plugins/external_lookup/malware_bazaar/README.md
           UI-plugin-lookup-virustotal:
             CONTAINER_NAME: assemblyline-ui-plugin-lookup-virustotal
             DIRECTORY: assemblyline-ui
-            README_PATH: plugins/external_lookup/virustotal
+            README_PATH: plugins/external_lookup/virustotal/README.md
           UI-frontend:
             CONTAINER_NAME: assemblyline-ui-frontend
           SocketIO:
