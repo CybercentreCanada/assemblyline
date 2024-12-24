@@ -73,7 +73,7 @@ steps:
         git_repo = "${{ parameters.github_repo }}"
         docker_repo ="${{ parameters.dockerhub_repo }}" or git_repo
         readme = "${{ parameters.readme_path }}"
-        if not readme
+        if not readme:
           readme = "README.md"
         readme_path = os.path.join("$(Pipeline.Workspace)/working", git_repo, readme)
 
