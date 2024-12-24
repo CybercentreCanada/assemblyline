@@ -59,146 +59,146 @@ stages:
   # Build Python packages
   - template: templates/stages/build-python.yaml
 
-  # # Build/Test Frontend
-  # - template: templates/stages/build-test-frontend.yaml
+  # Build/Test Frontend
+  - template: templates/stages/build-test-frontend.yaml
 
-  # # Build Base
-  # - template: templates/stages/build-base.yaml
+  # Build Base
+  - template: templates/stages/build-base.yaml
 
-  # # Build Core
-  # - template: templates/stages/build-container.yaml
-  #   parameters:
-  #     baseImage: assemblyline
-  #     component: assemblyline-core
-  #     dependsOn: ["build_base"]
-  #     dockerFile: deployment/Dockerfile
+  # Build Core
+  - template: templates/stages/build-container.yaml
+    parameters:
+      baseImage: assemblyline
+      component: assemblyline-core
+      dependsOn: ["build_base"]
+      dockerFile: deployment/Dockerfile
 
-  # # Service Server
-  # - template: templates/stages/build-container.yaml
-  #   parameters:
-  #     baseImage: assemblyline-core
-  #     component: assemblyline-service-server
-  #     dependsOn: ["build_core"]
-  #     dockerFile: docker/Dockerfile
+  # Service Server
+  - template: templates/stages/build-container.yaml
+    parameters:
+      baseImage: assemblyline-core
+      component: assemblyline-service-server
+      dependsOn: ["build_core"]
+      dockerFile: docker/Dockerfile
 
-  # # Service Base
-  # - template: templates/stages/build-container.yaml
-  #   parameters:
-  #     baseImage: assemblyline
-  #     component: assemblyline-v4-service
-  #     dependsOn: ["build_base"]
-  #     dockerFile: docker/Dockerfile
-  #     imageName: assemblyline-v4-service-base
-
-
-  # # ResultSample Service
-  # - template: templates/stages/build-container.yaml
-  #   parameters:
-  #     baseImage: assemblyline-v4-service-base
-  #     component: assemblyline-v4-service
-  #     dependsOn: ["build_v4_service_base"]
-  #     dockerFile: assemblyline_result_sample_service/Dockerfile
-  #     imageName: assemblyline-service-resultsample
-
-  # # UI (API)
-  # - template: templates/stages/build-container.yaml
-  #   parameters:
-  #     baseImage: assemblyline
-  #     component: assemblyline-ui
-  #     dependsOn: ["build_base", "build_python"]
-  #     dockerFile: docker/ui/Dockerfile
-  #     imageName: assemblyline-ui
-
-  # # SocketIO
-  # - template: templates/stages/build-container.yaml
-  #   parameters:
-  #     baseImage: assemblyline
-  #     component: assemblyline-ui
-  #     dependsOn: ["build_base", "build_python"]
-  #     dockerFile: docker/socketio/Dockerfile
-  #     imageName: assemblyline-socketio
-
-  # # External Lookup: Assemblyline
-  # - template: templates/stages/build-container.yaml
-  #   parameters:
-  #     baseImage: assemblyline
-  #     component: assemblyline-ui
-  #     dependsOn: ["build_base", "build_python"]
-  #     imageName: assemblyline-ui-plugin-lookup-assemblyline
-  #     workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/plugins/external_lookup/assemblyline_lookup
-
-  # # External Lookup: MalwareBazaar
-  # - template: templates/stages/build-container.yaml
-  #   parameters:
-  #     baseImage: assemblyline
-  #     component: assemblyline-ui
-  #     dependsOn: ["build_base", "build_python"]
-  #     imageName: assemblyline-ui-plugin-lookup-malwarebazaar
-  #     workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/plugins/external_lookup/malware_bazaar
-
-  # # External Lookup: VirusTotal
-  # - template: templates/stages/build-container.yaml
-  #   parameters:
-  #     baseImage: assemblyline
-  #     component: assemblyline-ui
-  #     dependsOn: ["build_base", "build_python"]
-  #     imageName: assemblyline-ui-plugin-lookup-virustotal
-  #     workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/plugins/external_lookup/virustotal
+  # Service Base
+  - template: templates/stages/build-container.yaml
+    parameters:
+      baseImage: assemblyline
+      component: assemblyline-v4-service
+      dependsOn: ["build_base"]
+      dockerFile: docker/Dockerfile
+      imageName: assemblyline-v4-service-base
 
 
-  # ### TESTING ###
-  # - template: templates/stages/test-container.yaml
-  #   parameters:
-  #     imageName: assemblyline
-  #     component: assemblyline-base
-  #     dependsOn: [build_base]
+  # ResultSample Service
+  - template: templates/stages/build-container.yaml
+    parameters:
+      baseImage: assemblyline-v4-service-base
+      component: assemblyline-v4-service
+      dependsOn: ["build_v4_service_base"]
+      dockerFile: assemblyline_result_sample_service/Dockerfile
+      imageName: assemblyline-service-resultsample
 
-  # - template: templates/stages/test-container.yaml
-  #   parameters:
-  #     component: assemblyline-core
-  #     dependsOn: [build_core]
+  # UI (API)
+  - template: templates/stages/build-container.yaml
+    parameters:
+      baseImage: assemblyline
+      component: assemblyline-ui
+      dependsOn: ["build_base", "build_python"]
+      dockerFile: docker/ui/Dockerfile
+      imageName: assemblyline-ui
 
-  # - template: templates/stages/test-ui.yaml
+  # SocketIO
+  - template: templates/stages/build-container.yaml
+    parameters:
+      baseImage: assemblyline
+      component: assemblyline-ui
+      dependsOn: ["build_base", "build_python"]
+      dockerFile: docker/socketio/Dockerfile
+      imageName: assemblyline-socketio
 
-  # - template: templates/stages/test-container.yaml
-  #   parameters:
-  #     component: assemblyline-service-server
-  #     dependsOn: [build_service_server]
-  #     additionalSteps:
-  #       - script: |
-  #           docker run -d --name server --network host --restart on-failure cccstemp.azurecr.io/assemblyline-service-server:$TAG
+  # External Lookup: Assemblyline
+  - template: templates/stages/build-container.yaml
+    parameters:
+      baseImage: assemblyline
+      component: assemblyline-ui
+      dependsOn: ["build_base", "build_python"]
+      imageName: assemblyline-ui-plugin-lookup-assemblyline
+      workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/plugins/external_lookup/assemblyline_lookup
 
-  # - template: templates/stages/test-container.yaml
-  #   parameters:
-  #     imageName: assemblyline-v4-service-base
-  #     component: assemblyline-v4-service
-  #     dependsOn: [build_v4_service_base]
+  # External Lookup: MalwareBazaar
+  - template: templates/stages/build-container.yaml
+    parameters:
+      baseImage: assemblyline
+      component: assemblyline-ui
+      dependsOn: ["build_base", "build_python"]
+      imageName: assemblyline-ui-plugin-lookup-malwarebazaar
+      workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/plugins/external_lookup/malware_bazaar
+
+  # External Lookup: VirusTotal
+  - template: templates/stages/build-container.yaml
+    parameters:
+      baseImage: assemblyline
+      component: assemblyline-ui
+      dependsOn: ["build_base", "build_python"]
+      imageName: assemblyline-ui-plugin-lookup-virustotal
+      workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/plugins/external_lookup/virustotal
+
+
+  ### TESTING ###
+  - template: templates/stages/test-container.yaml
+    parameters:
+      imageName: assemblyline
+      component: assemblyline-base
+      dependsOn: [build_base]
+
+  - template: templates/stages/test-container.yaml
+    parameters:
+      component: assemblyline-core
+      dependsOn: [build_core]
+
+  - template: templates/stages/test-ui.yaml
+
+  - template: templates/stages/test-container.yaml
+    parameters:
+      component: assemblyline-service-server
+      dependsOn: [build_service_server]
+      additionalSteps:
+        - script: |
+            docker run -d --name server --network host --restart on-failure cccstemp.azurecr.io/assemblyline-service-server:$TAG
+
+  - template: templates/stages/test-container.yaml
+    parameters:
+      imageName: assemblyline-v4-service-base
+      component: assemblyline-v4-service
+      dependsOn: [build_v4_service_base]
 
   ### PUBLISHING ###
   - stage: deploy
     displayName: Deploy
-    # dependsOn: [test_assemblyline, test_core, test_ui, build_frontend, test_service_server, test_v4_service_base]
+    dependsOn: [test_assemblyline, test_core, test_ui, build_frontend, test_service_server, test_v4_service_base]
     jobs:
-    # - job: deploy_python
-    #   displayName: Deploy Python Packages
-    #   dependsOn: []
-    #   variables:
-    #     - group: deployment-information
-    #   steps:
-    #     - checkout: none
-    #     - download: current
-    #       artifact: working
-    #     - script: |
-    #         set -exv  # Echo commands before they are run
-    #         sudo env "PATH=$PATH" python -m pip install --no-cache-dir -U 'urllib3<2' twine
-    #         ls dist
-    #         twine upload --skip-existing dist/*
-    #       workingDirectory: $(Pipeline.Workspace)/working/
-    #       displayName: Deploy to PyPI
-    #       retryCountOnTaskFailure: 3
-    #       env:
-    #         TWINE_USERNAME: $(twineUsername)
-    #         TWINE_PASSWORD: $(twinePassword)
+    - job: deploy_python
+      displayName: Deploy Python Packages
+      dependsOn: []
+      variables:
+        - group: deployment-information
+      steps:
+        - checkout: none
+        - download: current
+          artifact: working
+        - script: |
+            set -exv  # Echo commands before they are run
+            sudo env "PATH=$PATH" python -m pip install --no-cache-dir -U 'urllib3<2' twine
+            ls dist
+            twine upload --skip-existing dist/*
+          workingDirectory: $(Pipeline.Workspace)/working/
+          displayName: Deploy to PyPI
+          retryCountOnTaskFailure: 3
+          env:
+            TWINE_USERNAME: $(twineUsername)
+            TWINE_PASSWORD: $(twinePassword)
     - job: deploy_containers
       displayName: Deploy Docker Image
       dependsOn: []
@@ -261,40 +261,40 @@ stages:
           inputs:
             command: login
             containerRegistry: CHIMERA-U-ACR
-        # # Push to container registries
-        # - script: |
-        #     set -exv  # Echo commands before they are run
-        #     if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
-        #     export VERSION=${TAG/stable}
-        #     export VERSION=${VERSION/beta/b}
-        #     export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
+        # Push to container registries
+        - script: |
+            set -exv  # Echo commands before they are run
+            if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
+            export VERSION=${TAG/stable}
+            export VERSION=${VERSION/beta/b}
+            export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
 
-        #     export BUILT_AS=cccstemp.azurecr.io/${CONTAINER_NAME}:$TAG
-        #     docker pull $BUILT_AS
+            export BUILT_AS=cccstemp.azurecr.io/${CONTAINER_NAME}:$TAG
+            docker pull $BUILT_AS
 
-        #     # Publish to public container registries
-        #     for IMAGE in "cccs/" "docker.pkg.github.com/cybercentrecanada/assemblyline/"
-        #     do
-        #       docker tag $BUILT_AS ${IMAGE}${CONTAINER_NAME}:$TAG
-        #       docker tag $BUILT_AS ${IMAGE}${CONTAINER_NAME}:$BUILD_TYPE
-        #       docker tag $BUILT_AS ${IMAGE}${CONTAINER_NAME}:$SERIES
-        #       docker push ${IMAGE}${CONTAINER_NAME} --all-tags
-        #     done
+            # Publish to public container registries
+            for IMAGE in "cccs/" "docker.pkg.github.com/cybercentrecanada/assemblyline/"
+            do
+              docker tag $BUILT_AS ${IMAGE}${CONTAINER_NAME}:$TAG
+              docker tag $BUILT_AS ${IMAGE}${CONTAINER_NAME}:$BUILD_TYPE
+              docker tag $BUILT_AS ${IMAGE}${CONTAINER_NAME}:$SERIES
+              docker push ${IMAGE}${CONTAINER_NAME} --all-tags
+            done
 
-        #     # Publish to private container registry (append labelling)
-        #     docker build -t $BUILT_AS -<<EOF
-        #     FROM $BUILT_AS
-        #     LABEL classification=UNCLASSIFIED
-        #     EOF
+            # Publish to private container registry (append labelling)
+            docker build -t $BUILT_AS -<<EOF
+            FROM $BUILT_AS
+            LABEL classification=UNCLASSIFIED
+            EOF
 
-        #     IMAGE=uchimera.azurecr.io/cccs/
-        #     docker tag $BUILT_AS ${IMAGE}${CONTAINER_NAME}:$TAG
-        #     docker tag $BUILT_AS ${IMAGE}${CONTAINER_NAME}:$BUILD_TYPE
-        #     docker tag $BUILT_AS ${IMAGE}${CONTAINER_NAME}:$SERIES
-        #     docker push ${IMAGE}${CONTAINER_NAME} --all-tags
+            IMAGE=uchimera.azurecr.io/cccs/
+            docker tag $BUILT_AS ${IMAGE}${CONTAINER_NAME}:$TAG
+            docker tag $BUILT_AS ${IMAGE}${CONTAINER_NAME}:$BUILD_TYPE
+            docker tag $BUILT_AS ${IMAGE}${CONTAINER_NAME}:$SERIES
+            docker push ${IMAGE}${CONTAINER_NAME} --all-tags
 
-        #   displayName: Deploy base Docker Hub
-        #   retryCountOnTaskFailure: 3
+          displayName: Deploy base Docker Hub
+          retryCountOnTaskFailure: 3
 
         - script: |
             echo "##vso[task.setvariable variable=github_repo;isreadonly=true]${DIRECTORY:-${CONTAINER_NAME}}"

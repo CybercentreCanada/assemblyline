@@ -12,7 +12,7 @@ parameters:
 
 steps:
   - bash: |
-      publish="true"
+      publish="false"
       TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
       if [[ "$TAG" == *stable* ]]; then
         publish="true"
