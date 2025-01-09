@@ -105,7 +105,7 @@ stages:
     parameters:
       baseImage: assemblyline
       component: assemblyline-ui
-      dependsOn: ["build_base", "build_python"]
+      dependsOn: ["build_base"]
       dockerFile: docker/ui/Dockerfile
       imageName: assemblyline-ui
 
@@ -114,7 +114,7 @@ stages:
     parameters:
       baseImage: assemblyline
       component: assemblyline-ui
-      dependsOn: ["build_base", "build_python"]
+      dependsOn: ["build_base"]
       dockerFile: docker/socketio/Dockerfile
       imageName: assemblyline-socketio
 
@@ -123,7 +123,7 @@ stages:
     parameters:
       baseImage: assemblyline
       component: assemblyline-ui
-      dependsOn: ["build_base", "build_python"]
+      dependsOn: ["build_base"]
       imageName: assemblyline-ui-plugin-lookup-assemblyline
       workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/plugins/external_lookup/assemblyline_lookup
 
@@ -132,7 +132,7 @@ stages:
     parameters:
       baseImage: assemblyline
       component: assemblyline-ui
-      dependsOn: ["build_base", "build_python"]
+      dependsOn: ["build_base"]
       imageName: assemblyline-ui-plugin-lookup-malwarebazaar
       workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/plugins/external_lookup/malware_bazaar
 
@@ -141,7 +141,7 @@ stages:
     parameters:
       baseImage: assemblyline
       component: assemblyline-ui
-      dependsOn: ["build_base", "build_python"]
+      dependsOn: ["build_base"]
       imageName: assemblyline-ui-plugin-lookup-virustotal
       workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/plugins/external_lookup/virustotal
 
