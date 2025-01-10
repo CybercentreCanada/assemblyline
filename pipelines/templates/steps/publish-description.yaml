@@ -3,9 +3,6 @@ parameters:
   - name: dockerhub_repo
     type: string
     default: ""
-  # Repository name in Github
-  - name: github_repo
-    type: string
   # Path to the README file in the artifact
   - name: readme_path
     type: string
@@ -63,6 +60,10 @@ steps:
   - download: current
     artifact: working
 
+  - script: |
+      echo "##vso[task.setvariable variable=github_repo;isreadonly=true]${DIRECTORY:-${CONTAINER_NAME}}"
+    displayName: "Configure Github Repo variable"
+
   - task: PythonScript@0
     inputs:
       scriptSource: "inline"
@@ -70,7 +71,7 @@ steps:
         import httpx
         import os
 
-        git_repo = "${{ parameters.github_repo }}"
+        git_repo = "${{ variables.github_repo }}"
         docker_repo ="${{ parameters.dockerhub_repo }}" or git_repo
         readme = "${{ parameters.readme_path }}"
         if not readme:
@@ -126,7 +127,7 @@ steps:
           "slug": "security",
           "name": "security"
         }]
-        repo = "${{ parameters.dockerhub_repo }}" or "${{ parameters.github_repo }}"
+        repo = "${{ parameters.dockerhub_repo }}" or "${{ variables.github_repo }}"
         url = f"https://hub.docker.com/v2/repositories/cccs/{repo}/categories/"
         print(f"{url=}")
 
