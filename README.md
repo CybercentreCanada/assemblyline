@@ -12,6 +12,13 @@
   </p>
 </div>
 
+# Assemblyline 4 - Automated malware analysis framework
+
+AssemblyLine 4 is an open source malware analysis framework. It leverages Kubernetes and Docker to adapt to many use cases; from a small appliance for supporting manual malware analysis and security teams to large-scale enterprise security operations scanning millions of files a day and providing triage capabilities.
+
+AssemblyLine can be easily integrated in your environment using it’s powerful rest API and web interfaces. The platform comes with dozens of services to provide deep file analysis and enable integration with other security platforms such as anti-virus, malware-detonation sandboxes and threat knowledge bases. Best of all, with a little bit of Python code you can extend it yourself by creating new analysis and integration services.
+
+
 # What is the purpose of this repo?
 
 This is a repository containing development resources for the Assembyline project.

@@ -1,0 +1,31 @@
+parameters:
+  # Additional steps to run before testing starts
+  - name: additionalSteps
+    type: stepList
+    default: []
+  # Component image to be tested
+  - name: component
+    type: string
+  # Any dependencies before testing image
+  - name: dependsOn
+    type: object
+    default: []
+  # Acts as an explicit image name setting rather than to be derived from component
+  - name: imageName
+    type: string
+    default: ""
+
+stages:
+  - stage: test_${{ replace(replace(coalesce(parameters.imageName, parameters.component), 'assemblyline-', ''), '-', '_') }}
+    displayName: Test ${{ replace(coalesce(parameters.imageName, parameters.component), 'assemblyline-', '') }}
+    dependsOn: ${{ parameters.dependsOn }}
+    variables:
+      displayName: ${{ replace(parameters.imageName, 'assemblyline-', '') }}
+      imageName: ${{ coalesce(parameters.imageName, parameters.component) }}
+      workingDirectory: $(Pipeline.Workspace)/working/${{ parameters.component }}
+    jobs:
+      - template: ../jobs/test-container.yaml
+        parameters:
+          additionalSteps: ${{ parameters.additionalSteps }}
+          imageName: ${{ variables.imageName }}
+          workingDirectory: ${{ variables.workingDirectory }}

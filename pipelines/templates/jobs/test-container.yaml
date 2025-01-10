@@ -1,0 +1,44 @@
+parameters:
+  # Additional steps to run before testing starts
+  - name: additionalSteps
+    type: stepList
+    default: []
+  # Acts as an explicit image name setting rather than to be derived from component
+  - name: imageName
+    type: string
+  # Working directory
+  - name: workingDirectory
+    type: string
+    default: ""
+
+jobs:
+  - job: test_${{ replace(parameters.imageName, '-', '_') }}
+    displayName: Test ${{ parameters.imageName }} Image
+    services:
+          elasticsearch: elasticsearch
+          sftp: sftp
+          redis: redis
+          minio: minio
+    steps:
+      - checkout: none
+      - download: current
+        artifact: working
+      - task: Docker@2
+        displayName: Login to docker registry
+        inputs:
+          command: login
+          containerRegistry: cccstemp
+      # run any addtional steps specified
+      - ${{ each step in parameters.additionalSteps }} :
+        - ${{ step }}
+      - script: |
+          set -exv  # Echo commands before they are run
+          export IMAGE=cccstemp.azurecr.io/${{ parameters.imageName }}
+          docker run -v `pwd`/test:/test \
+                      -v $(Pipeline.Workspace)/working/pipelines/base-config.yaml:/etc/assemblyline/config.yml \
+                      -w /test \
+                      --network host \
+                      ${IMAGE}:${TAG} \
+                      /bin/bash -c "pip install -r requirements.txt; CI=1 pytest -rsx --durations=10"
+        workingDirectory: ${{ parameters.workingDirectory }}
+        displayName: Run ${{ parameters.imageName }} tests

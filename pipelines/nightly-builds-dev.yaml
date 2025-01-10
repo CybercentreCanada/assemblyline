@@ -13,32 +13,7 @@ pr: none
 pool:
   vmImage: "ubuntu-20.04"
 
-stages:
-  - stage: build
-    displayName: Build
-    jobs:
-      - job: build_dev
-        dependsOn: []
-        displayName: Build Root Image
-        steps:
-          - task: Docker@2
-            displayName: Login to docker registry
-            inputs:
-              command: login
-              containerRegistry: cccstemp
-          - script: |
-              set -exv  # Echo commands before they are run
-              docker build -t common:local root-image -f root-image/common.Dockerfile
-
-              export IMAGE=cccstemp.azurecr.io/assemblyline-root-build
-              export BUILD_TYPE=latest
-
-              docker build --build-arg base=common:local -t $IMAGE:$BUILD_TYPE build-image
-              docker push $IMAGE -q --all-tags
-
-              export IMAGE=cccstemp.azurecr.io/assemblyline-root
-              docker build --build-arg base=common:local -t $IMAGE:$BUILD_TYPE root-image
-              docker push $IMAGE -q --all-tags
-
-              export BASE=$IMAGE
-            displayName: Build Root Images
+extends:
+  template: templates/stages/build-nightly.yaml
+  parameters:
+    build_type: "dev"

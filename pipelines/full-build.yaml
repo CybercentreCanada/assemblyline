@@ -9,6 +9,9 @@ pr: none
 pool:
   vmImage: "ubuntu-20.04"
 
+variables:
+  TAG: ${{ replace(variables['Build.SourceBranch'], 'refs/tags/v', '') }}
+
 resources:
   containers:
     - container: redis
@@ -25,15 +28,7 @@ resources:
         LOG_STDOUT: "true"
       ports:
         - 2222:2222
-    - container: es7
-      image: cccs/elasticsearch:7.17.4
-      env:
-        ES_JAVA_OPTS: "-Xms256m -Xmx512m"
-        DISCOVERY_TYPE: "single-node"
-        ELASTIC_PASSWORD: "devpass"
-      ports:
-        - 9200:9200
-    - container: es8
+    - container: elasticsearch
       image: cccs/elasticsearch:8.10.2
       env:
         ES_JAVA_OPTS: "-Xms256m -Xmx512m"
@@ -60,525 +55,129 @@ resources:
     name: CybercentreCanada/assemblyline4_docs
 
 stages:
-  - stage: build
-    displayName: Build and Test
-    jobs:
-      - job: build_python
-        displayName: Build Python Packages
-        steps:
-          - checkout: BuildRepo
-            submodules: recursive
-            persistCredentials: true
-          - task: UsePythonVersion@0
-            displayName: Set python version
-            inputs:
-              versionSpec: 3.11
-          - script: |
-              set -ex  # Echo commands before they are run
+  ### BUILDING ###
+  # Build Python packages
+  - template: templates/stages/build-python.yaml
 
-              # Figure out what the build kind is
-              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/"}
-              export VERSION=${BUILD_SOURCEBRANCH#"refs/tags/v"}
-              if [[ "$VERSION" == *stable* ]];
-              then
-                export BRANCH=master;
-              elif [[ "$VERSION" == *dev* ]];
-              then
-                export BRANCH=dev;
-              else
-                exit 1;
-              fi
+  # Build/Test Frontend
+  - template: templates/stages/build-test-frontend.yaml
 
-              echo "Building $VERSION On branch $BRANCH"
-              export VERSION=${VERSION/stable}
-              export VERSION=${VERSION/beta/b}
+  # Build Base
+  - template: templates/stages/build-base.yaml
 
-              # make sure we are on the right branches for all other repos
-              git config --global http.extraheader "`git config --get http.https://github.com/CybercentreCanada/assemblyline.extraheader`"
-              git submodule foreach git checkout -B $BRANCH --track origin/$BRANCH
-              git submodule foreach git pull
-              git submodule foreach git tag ${TAG}
-              git submodule foreach git push origin ${TAG}
-              sudo env "PATH=$PATH" python -m pip install --no-cache-dir -U wheel cython pip build
+  # Build Core
+  - template: templates/stages/build-container.yaml
+    parameters:
+      baseImage: assemblyline
+      component: assemblyline-core
+      dependsOn: ["build_base"]
+      dockerFile: deployment/Dockerfile
 
-              # Build base
-              cd assemblyline-base
-              echo $VERSION > assemblyline/VERSION
-              python -m build -s -o ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ &
+  # Service Server
+  - template: templates/stages/build-container.yaml
+    parameters:
+      baseImage: assemblyline-core
+      component: assemblyline-service-server
+      dependsOn: ["build_core"]
+      dockerFile: docker/Dockerfile
 
-              # Build core
-              cd ../assemblyline-core
-              echo $VERSION > assemblyline_core/VERSION
-              python -m build -s -o ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ &
+  # Service Base
+  - template: templates/stages/build-container.yaml
+    parameters:
+      baseImage: assemblyline
+      component: assemblyline-v4-service
+      dependsOn: ["build_base"]
+      dockerFile: docker/Dockerfile
+      imageName: assemblyline-v4-service-base
 
-              # Build ui
-              cd ../assemblyline-ui
-              echo $VERSION > assemblyline_ui/VERSION
-              python -m build -w -o ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ &
 
-              # Build service server
-              cd ../assemblyline-service-server
-              echo $VERSION > assemblyline_service_server/VERSION
-              python -m build -w -o ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ &
+  # ResultSample Service
+  - template: templates/stages/build-container.yaml
+    parameters:
+      baseImage: assemblyline-v4-service-base
+      component: assemblyline-v4-service
+      dependsOn: ["build_v4_service_base"]
+      dockerFile: assemblyline_result_sample_service/Dockerfile
+      imageName: assemblyline-service-resultsample
 
-              cd ../assemblyline-service-client
-              echo $VERSION > assemblyline_service_client/VERSION
-              python -m build -w -o ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ &
+  # UI (API)
+  - template: templates/stages/build-container.yaml
+    parameters:
+      baseImage: assemblyline
+      component: assemblyline-ui
+      dependsOn: ["build_base"]
+      dockerFile: docker/ui/Dockerfile
+      imageName: assemblyline-ui
 
-              cd ../assemblyline-v4-service
-              echo $VERSION > assemblyline_v4_service/VERSION
-              python -m build -w -o ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ &
+  # SocketIO
+  - template: templates/stages/build-container.yaml
+    parameters:
+      baseImage: assemblyline
+      component: assemblyline-ui
+      dependsOn: ["build_base"]
+      dockerFile: docker/socketio/Dockerfile
+      imageName: assemblyline-socketio
 
-              wait
-              cd ../
-              ls dist
-            displayName: Build Python Packages
-          - publish: $(System.DefaultWorkingDirectory)
-            artifact: working
+  # External Lookup: Assemblyline
+  - template: templates/stages/build-container.yaml
+    parameters:
+      baseImage: assemblyline
+      component: assemblyline-ui
+      dependsOn: ["build_base"]
+      imageName: assemblyline-ui-plugin-lookup-assemblyline
+      workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/plugins/external_lookup/assemblyline_lookup
 
-      - job: test_frontend
-        dependsOn: build_python
-        timeoutInMinutes: 10
-        displayName: Test Frontend Code
-        steps:
-          - checkout: none
-          - download: current
-            artifact: working
-          - task: NodeTool@0
-            displayName: 'Use Node 18.x'
-            inputs:
-              versionSpec: 18.x
-          - script: |
-              set -xv  # Echo commands before they are run
-              yarn install
-              yarn run tsc
-              
-            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend/
-            displayName: TypeScript Frontend
-          - script: |
-              set -xv  # Echo commands before they are run
-              yarn install
-              yarn run build-test
+  # External Lookup: MalwareBazaar
+  - template: templates/stages/build-container.yaml
+    parameters:
+      baseImage: assemblyline
+      component: assemblyline-ui
+      dependsOn: ["build_base"]
+      imageName: assemblyline-ui-plugin-lookup-malwarebazaar
+      workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/plugins/external_lookup/malware_bazaar
 
-            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend/
-            displayName: Test Frontend
-          - script: |
-              set -xv  # Echo commands before they are run
-              yarn install
-              yarn run build-lint
-              
-            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend/
-            displayName: ESLint Frontend
+  # External Lookup: VirusTotal
+  - template: templates/stages/build-container.yaml
+    parameters:
+      baseImage: assemblyline
+      component: assemblyline-ui
+      dependsOn: ["build_base"]
+      imageName: assemblyline-ui-plugin-lookup-virustotal
+      workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/plugins/external_lookup/virustotal
 
-      - job: build_frontend
-        dependsOn: test_frontend
-        displayName: Build Frontend Image
-        steps:
-          - checkout: none
-          - download: current
-            artifact: working
-          - task: Docker@2
-            displayName: Login to docker registry
-            inputs:
-              command: login
-              containerRegistry: cccstemp
-          - script: |
-              set -exv  # Echo commands before they are run
-              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
-              if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
-              export VERSION=${TAG/stable}
-              export VERSION=${VERSION/beta/b}
-              export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
 
-              export IMAGE=cccstemp.azurecr.io/assemblyline-ui-frontend
-              docker build --build-arg version=$VERSION -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES .
-              docker push $IMAGE -q --all-tags
-            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend/
-            displayName: Build Frontend
+  ### TESTING ###
+  - template: templates/stages/test-container.yaml
+    parameters:
+      imageName: assemblyline
+      component: assemblyline-base
+      dependsOn: [build_base]
 
-      - job: build_base
-        dependsOn: build_python
-        displayName: Build Base Image
-        steps:
-          - checkout: none
-          - download: current
-            artifact: working
-          - task: Docker@2
-            displayName: Login to docker registry
-            inputs:
-              command: login
-              containerRegistry: cccstemp
-          - script: |
-              set -exv  # Echo commands before they are run
-              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
-              if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
-              export VERSION=${TAG/stable}
-              export VERSION=${VERSION/beta/b}
-              export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
+  - template: templates/stages/test-container.yaml
+    parameters:
+      component: assemblyline-core
+      dependsOn: [build_core]
 
-              cd assemblyline-base
-              mv ../dist/ dist
+  - template: templates/stages/test-ui.yaml
 
-              docker pull cccstemp.azurecr.io/assemblyline-root-build:$BUILD_TYPE &
-              docker pull cccstemp.azurecr.io/assemblyline-root:$BUILD_TYPE &
-              wait
+  - template: templates/stages/test-container.yaml
+    parameters:
+      component: assemblyline-service-server
+      dependsOn: [build_service_server]
+      additionalSteps:
+        - script: |
+            docker run -d --name server --network host --restart on-failure cccstemp.azurecr.io/assemblyline-service-server:$TAG
 
-              set +xv
-              export IMAGE=cccstemp.azurecr.io/assemblyline
-              # docker build --build-arg version=$VERSION -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES . | while read line ; do echo "$(date) | $line"; done;
-              docker build --build-arg version=$VERSION \
-                           --build-arg version_tag=$TAG \
-                           --build-arg build_image=cccstemp.azurecr.io/assemblyline-root-build:$BUILD_TYPE \
-                           --build-arg base=cccstemp.azurecr.io/assemblyline-root \
-                           --build-arg tag=$BUILD_TYPE \
-                           -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES . -f incremental.Dockerfile | while read line ; do echo "$(date) | $line"; done;
-              docker push $IMAGE -q --all-tags
-            workingDirectory: $(Pipeline.Workspace)/working
-            displayName: Build Base
+  - template: templates/stages/test-container.yaml
+    parameters:
+      imageName: assemblyline-v4-service-base
+      component: assemblyline-v4-service
+      dependsOn: [build_v4_service_base]
 
-      - job: build_core
-        dependsOn: build_base
-        displayName: Build Core Image
-        steps:
-          - checkout: none
-          - download: current
-            artifact: working
-          - task: Docker@2
-            displayName: Login to docker registry
-            inputs:
-              command: login
-              containerRegistry: cccstemp
-          - script: |
-              set -exv  # Echo commands before they are run
-              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
-              if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
-              export VERSION=${TAG/stable}
-              export VERSION=${VERSION/beta/b}
-              export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
-
-              cd assemblyline-core
-              mv ../dist/ dist
-
-              export BASE=cccstemp.azurecr.io/assemblyline
-              export IMAGE=cccstemp.azurecr.io/assemblyline-core
-              docker build --build-arg base=$BASE \
-                           --build-arg version=$VERSION \
-                           --build-arg branch=$BUILD_TYPE \
-                           -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES . -f deployment/Dockerfile
-              docker push $IMAGE -q --all-tags
-            workingDirectory: $(Pipeline.Workspace)/working
-            displayName: Build Core
-
-      - job: build_service_server
-        dependsOn: build_core
-        displayName: Build Service Server Image
-        steps:
-          - checkout: none
-          - download: current
-            artifact: working
-          - task: Docker@2
-            displayName: Login to docker registry
-            inputs:
-              command: login
-              containerRegistry: cccstemp
-          - script: |
-              set -exv  # Echo commands before they are run
-              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
-              if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
-              export VERSION=${TAG/stable}
-              export VERSION=${VERSION/beta/b}
-              export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
-
-              cd assemblyline-service-server
-              mv ../dist/ dist
-
-              export BASE=cccstemp.azurecr.io/assemblyline-core
-              export IMAGE=cccstemp.azurecr.io/assemblyline-service-server
-              docker build --build-arg base=$BASE \
-                           --build-arg version=$VERSION \
-                           --build-arg branch=$BUILD_TYPE \
-                           -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES . -f docker/Dockerfile
-              docker push $IMAGE -q --all-tags
-            workingDirectory: $(Pipeline.Workspace)/working
-            displayName: Build Core
-
-      - job: build_service_base
-        dependsOn: build_base
-        displayName: Build Service Base Image
-        steps:
-          - checkout: none
-          - download: current
-            artifact: working
-          - task: Docker@2
-            displayName: Login to docker registry
-            inputs:
-              command: login
-              containerRegistry: cccstemp
-          - script: |
-              set -exv  # Echo commands before they are run
-              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
-              if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
-              export VERSION=${TAG/stable}
-              export VERSION=${VERSION/beta/b}
-              export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
-
-              cd assemblyline-v4-service
-              mv ../dist/ dist
-
-              set +xv
-
-              export BASE=cccstemp.azurecr.io/assemblyline
-              export IMAGE=cccstemp.azurecr.io/assemblyline-v4-service-base
-              docker build --build-arg base=$BASE \
-                           --build-arg version=$VERSION \
-                           --build-arg branch=$BUILD_TYPE -t $IMAGE:$TAG -t $IMAGE:$SERIES -t $IMAGE:$BUILD_TYPE . -f docker/Dockerfile | while read line ; do echo "$(date) | $line"; done;
-              docker push $IMAGE -q --all-tags
-
-              export BASE=$IMAGE
-              export IMAGE=cccstemp.azurecr.io/assemblyline-service-resultsample
-              docker build --build-arg base=$BASE \
-                           --build-arg version=$VERSION \
-                           --build-arg branch=$BUILD_TYPE -t $IMAGE:$TAG -t $IMAGE:$SERIES -t $IMAGE:$BUILD_TYPE . -f assemblyline_result_sample_service/Dockerfile | while read line ; do echo "$(date) | $line"; done;
-              docker push $IMAGE -q --all-tags
-
-            workingDirectory: $(Pipeline.Workspace)/working
-            displayName: Build Service Base
-
-      - job: build_ui
-        dependsOn: ["build_base", "build_python"]
-        displayName: Build UI Image
-        steps:
-          - checkout: none
-          - download: current
-            artifact: working
-          - task: Docker@2
-            displayName: Login to docker registry
-            inputs:
-              command: login
-              containerRegistry: cccstemp
-          - script: |
-              set -exv  # Echo commands before they are run
-              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
-              if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
-              export VERSION=${TAG/stable}
-              export VERSION=${VERSION/beta/b}
-              export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
-
-              cd assemblyline-ui
-              mv ../dist/ dist
-
-              export BASE=cccstemp.azurecr.io/assemblyline
-
-              set +xv
-              export IMAGE=cccstemp.azurecr.io/assemblyline-ui
-              docker build --build-arg base=$BASE --build-arg version=$VERSION --build-arg branch=$BUILD_TYPE -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES . -f docker/ui/Dockerfile | while read line ; do echo "$(date) | $line"; done;
-              docker push $IMAGE -q --all-tags
-
-              export IMAGE=cccstemp.azurecr.io/assemblyline-socketio
-              docker build --build-arg base=$BASE --build-arg version=$VERSION --build-arg branch=$BUILD_TYPE -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES . -f docker/socketio/Dockerfile | while read line ; do echo "$(date) | $line"; done;
-              docker push $IMAGE -q --all-tags
-
-              cd plugins/external_lookup
-              export IMAGE=cccstemp.azurecr.io/assemblyline-ui-plugin-lookup-assemblyline
-              docker build --build-arg base=$BASE --build-arg version=$VERSION -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES ./assemblyline_lookup/. | while read line ; do echo "$(date) | $line"; done;
-              docker push $IMAGE -q --all-tags
-
-              export IMAGE=cccstemp.azurecr.io/assemblyline-ui-plugin-lookup-malwarebazaar
-              docker build --build-arg base=$BASE --build-arg version=$VERSION -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES ./malware_bazaar/. | while read line ; do echo "$(date) | $line"; done;
-              docker push $IMAGE -q --all-tags
-
-              export IMAGE=cccstemp.azurecr.io/assemblyline-ui-plugin-lookup-virustotal
-              docker build --build-arg base=$BASE --build-arg version=$VERSION -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES ./virustotal/. | while read line ; do echo "$(date) | $line"; done;
-              docker push $IMAGE -q --all-tags
-            workingDirectory: $(Pipeline.Workspace)/working
-            displayName: Build UI
-
-      - job: test_base
-        dependsOn: build_base
-        displayName: Test Base Image
-        timeoutInMinutes: 10
-        strategy:
-          matrix:
-            elasticsearch_7:
-              elasticsearch: es7
-            elasticsearch_8:
-              elasticsearch: es8
-        services:
-          elasticsearch: $[ variables['elasticsearch'] ]
-          sftp: sftp
-          redis: redis
-          minio: minio
-        steps:
-          - checkout: none
-          - download: current
-            artifact: working
-          - task: Docker@2
-            displayName: Login to docker registry
-            inputs:
-              command: login
-              containerRegistry: cccstemp
-          - script: |
-              set -exv  # Echo commands before they are run
-              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
-
-              cd assemblyline-base
-
-              docker run -v `pwd`/test:/test \
-                         -v $(Pipeline.Workspace)/working/pipelines/base-config.yaml:/etc/assemblyline/config.yml \
-                         -w /test \
-                         --network host \
-                         cccstemp.azurecr.io/assemblyline:${TAG} \
-                         /bin/bash -c "pip install -r requirements.txt; CI=1 pytest -rsx --durations=10"
-            workingDirectory: $(Pipeline.Workspace)/working
-            displayName: Test Base
-
-      - job: test_core
-        dependsOn: build_core
-        timeoutInMinutes: 10
-        services:
-          elasticsearch: es8
-          redis: redis
-        displayName: Test Core Image
-        steps:
-          - checkout: none
-          - download: current
-            artifact: working
-          - task: Docker@2
-            displayName: Login to docker registry
-            inputs:
-              command: login
-              containerRegistry: cccstemp
-          - script: |
-              set -exv  # Echo commands before they are run
-              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
-
-              cd assemblyline-core
-
-              docker run -v `pwd`/test:/test \
-                         -v $(Pipeline.Workspace)/working/pipelines/base-config.yaml:/etc/assemblyline/config.yml \
-                         -w /test \
-                         --network host \
-                         cccstemp.azurecr.io/assemblyline-core:${TAG} /bin/bash -c "pip install -r requirements.txt; CI=1 pytest -rsx --durations=10"
-            workingDirectory: $(Pipeline.Workspace)/working
-            displayName: Test Core
-
-      - job: test_ui
-        dependsOn: ["build_ui", "build_frontend"]
-        timeoutInMinutes: 10
-        services:
-          elasticsearch: es8
-          redis: redis
-          minio: minio
-        displayName: Test UI Image
-        steps:
-          - checkout: none
-          - download: current
-            artifact: working
-          - task: Docker@2
-            displayName: Login to docker registry
-            inputs:
-              command: login
-              containerRegistry: cccstemp
-          - script: |
-              set -e
-              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
-
-              docker run -d --name ui --network host -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml -v $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml --restart on-failure cccstemp.azurecr.io/assemblyline-ui:$TAG &
-              docker run -d --name socketsrv --network host -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml -v $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml --restart on-failure cccstemp.azurecr.io/assemblyline-socketio:$TAG &
-              docker run -d --name frontend --network host --restart on-failure cccstemp.azurecr.io/assemblyline-ui-frontend:$TAG &
-              docker run -d --name nginx --network host --restart on-failure -e "FRONTEND_HOST=127.0.0.1" -e "UI_HOST=127.0.0.1" -e "SOCKET_HOST=127.0.0.1" -e "TEMPLATE=minimal" -e "FQDN=localhost" -e "ACCESS_LOG=/dev/stdout" -e "ERROR_LEVEL=info" cccs/nginx-ssl-frontend &
-              wait
-
-              wget http://localhost:5000/healthz/ready --timeout=2 --retry-on-http-error=502 --retry-on-http-error=503 --waitretry=10 --retry-connrefused
-              wget http://localhost:5002/healthz/ready --timeout=2 --retry-on-http-error=502 --retry-on-http-error=503 --waitretry=10 --retry-connrefused
-              wget https://localhost --no-check-certificate --timeout=2 --retry-on-http-error=502 --waitretry=10 --retry-connrefused
-
-              docker run -v `pwd`/test:/test \
-                         -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml \
-                         -v $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml \
-                         -w /test \
-                         --network host \
-                         cccstemp.azurecr.io/assemblyline-socketio:${TAG} \
-                         /bin/bash -c "pip install -r requirements.txt; CI=1 pytest -rsx --durations=10"
-            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui
-            displayName: Test UI
-          - script: docker logs ui
-            condition: failed()
-            displayName: UI Logs
-          - script: docker logs socketsrv
-            condition: failed()
-            displayName: SocketIO Logs
-          - script: docker logs frontend
-            condition: failed()
-            displayName: Frontend Logs
-          - script: docker logs nginx
-            condition: failed()
-            displayName: NGINX Logs
-
-      - job: test_service_server
-        dependsOn: build_service_server
-        timeoutInMinutes: 10
-        services:
-          elasticsearch: es8
-          redis: redis
-          minio: minio
-        displayName: Test Service Server Image
-        steps:
-          - checkout: none
-          - download: current
-            artifact: working
-          - task: Docker@2
-            displayName: Login to docker registry
-            inputs:
-              command: login
-              containerRegistry: cccstemp
-          - script: |
-              set -e
-              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
-
-              docker run -d --name server --network host --restart on-failure cccstemp.azurecr.io/assemblyline-service-server:$TAG
-
-              docker run -v `pwd`/test:/test \
-                         -v $(Pipeline.Workspace)/working/pipelines/base-config.yaml:/etc/assemblyline/config.yml \
-                         -w /test \
-                         --network host \
-                         cccstemp.azurecr.io/assemblyline-service-server:${TAG} \
-                         /bin/bash -c "pip install -r requirements.txt; CI=1 pytest -rsx --durations=10"
-            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-service-server
-            displayName: Test Service Server
-
-      - job: test_service_base
-        dependsOn: build_service_base
-        timeoutInMinutes: 10
-        services:
-          elasticsearch: es8
-          redis: redis
-          minio: minio
-        displayName: Test Service Base Image
-        steps:
-          - checkout: none
-          - download: current
-            artifact: working
-          - task: Docker@2
-            displayName: Login to docker registry
-            inputs:
-              command: login
-              containerRegistry: cccstemp
-          - script: |
-              set -e
-              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
-
-              docker run -v `pwd`/test:/test \
-                         -v $(Pipeline.Workspace)/working/pipelines/base-config.yaml:/etc/assemblyline/config.yml \
-                         -w /test \
-                         --network host \
-                         cccstemp.azurecr.io/assemblyline-v4-service-base:${TAG} \
-                         /bin/bash -c "pip install -r requirements.txt; CI=1 pytest -rsx --durations=10"
-            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-v4-service
-            displayName: Test Service Base
-
+  ### PUBLISHING ###
   - stage: deploy
     displayName: Deploy
+    dependsOn: [test_assemblyline, test_core, test_ui, build_frontend, test_service_server, test_v4_service_base]
     jobs:
     - job: deploy_python
       displayName: Deploy Python Packages
@@ -603,30 +202,43 @@ stages:
     - job: deploy_containers
       displayName: Deploy Docker Image
       dependsOn: []
+      variables:
+        - group: "Dockerhub README"
       strategy:
         matrix:
           Base:
             CONTAINER_NAME: assemblyline
+            DIRECTORY: assemblyline-base
           Core:
             CONTAINER_NAME: assemblyline-core
           UI:
             CONTAINER_NAME: assemblyline-ui
           UI-plugin-lookup-assemblyline:
             CONTAINER_NAME: assemblyline-ui-plugin-lookup-assemblyline
+            DIRECTORY: assemblyline-ui
+            README_PATH: plugins/external_lookup/assemblyline_lookup/README.md
           UI-plugin-lookup-malwarebazaar:
             CONTAINER_NAME: assemblyline-ui-plugin-lookup-malwarebazaar
+            DIRECTORY: assemblyline-ui
+            README_PATH: plugins/external_lookup/malware_bazaar/README.md
           UI-plugin-lookup-virustotal:
             CONTAINER_NAME: assemblyline-ui-plugin-lookup-virustotal
+            DIRECTORY: assemblyline-ui
+            README_PATH: plugins/external_lookup/virustotal/README.md
           UI-frontend:
             CONTAINER_NAME: assemblyline-ui-frontend
           SocketIO:
             CONTAINER_NAME: assemblyline-socketio
+            DIRECTORY: assemblyline-ui
           Service-Server:
             CONTAINER_NAME: assemblyline-service-server
           Service-Base:
             CONTAINER_NAME: assemblyline-v4-service-base
+            DIRECTORY: assemblyline-v4-service
           Sample-Service:
             CONTAINER_NAME: assemblyline-service-resultsample
+            DIRECTORY: assemblyline-v4-service
+            README_PATH: assemblyline-v4-service/assemblyline_result_sample_service/README.md
       steps:
         - checkout: none
         - task: Docker@2
@@ -649,9 +261,9 @@ stages:
           inputs:
             command: login
             containerRegistry: CHIMERA-U-ACR
+        # Push to container registries
         - script: |
             set -exv  # Echo commands before they are run
-            export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
             if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
             export VERSION=${TAG/stable}
             export VERSION=${VERSION/beta/b}
@@ -660,15 +272,37 @@ stages:
             export BUILT_AS=cccstemp.azurecr.io/${CONTAINER_NAME}:$TAG
             docker pull $BUILT_AS
 
-            for IMAGE in "cccs/" "docker.pkg.github.com/cybercentrecanada/assemblyline/" "uchimera.azurecr.io/cccs/"
+            # Publish to public container registries
+            for IMAGE in "cccs/" "docker.pkg.github.com/cybercentrecanada/assemblyline/"
             do
               docker tag $BUILT_AS ${IMAGE}${CONTAINER_NAME}:$TAG
               docker tag $BUILT_AS ${IMAGE}${CONTAINER_NAME}:$BUILD_TYPE
               docker tag $BUILT_AS ${IMAGE}${CONTAINER_NAME}:$SERIES
               docker push ${IMAGE}${CONTAINER_NAME} --all-tags
             done
+
+            # Publish to private container registry (append labelling)
+            docker build -t $BUILT_AS -<<EOF
+            FROM $BUILT_AS
+            LABEL classification=UNCLASSIFIED
+            EOF
+
+            IMAGE=uchimera.azurecr.io/cccs/
+            docker tag $BUILT_AS ${IMAGE}${CONTAINER_NAME}:$TAG
+            docker tag $BUILT_AS ${IMAGE}${CONTAINER_NAME}:$BUILD_TYPE
+            docker tag $BUILT_AS ${IMAGE}${CONTAINER_NAME}:$SERIES
+            docker push ${IMAGE}${CONTAINER_NAME} --all-tags
+
           displayName: Deploy base Docker Hub
           retryCountOnTaskFailure: 3
+
+        # Publish image documentation to DockerHub
+        - template: templates/steps/publish-description.yaml
+          parameters:
+            dockerhub_repo: $(CONTAINER_NAME)
+            readme_path: $(README_PATH)
+
+
     - job: update_odm_docs
       displayName: "Update Assemblyline4 Documentation"
       steps:
@@ -684,7 +318,6 @@ stages:
             containerRegistry: cccstemp
         - script: |
             set -exv  # Echo commands before they are run
-            export TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
 
             # Prepare output directory
             cp -rf $(Agent.BuildDirectory)/assemblyline4_docs .
