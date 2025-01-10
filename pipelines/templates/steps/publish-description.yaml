@@ -9,7 +9,7 @@ parameters:
 
 steps:
   - bash: |
-      publish="false"
+      publish="true"
       TAG=${BUILD_SOURCEBRANCH#"refs/tags/v"}
       if [[ "$TAG" == *stable* ]]; then
         publish="true"
