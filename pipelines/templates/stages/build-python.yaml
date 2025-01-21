@@ -43,6 +43,7 @@ stages:
               # Build base
               cd assemblyline-base
               echo $VERSION > assemblyline/VERSION
+              cythonize -i assemblyline/common/frequency.pyx
               python -m build -s -o ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ &
 
               # Build core
