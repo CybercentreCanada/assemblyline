@@ -315,8 +315,6 @@ stages:
     - job: update_helm_release
       displayName: "Update default release in Helm chart"
       steps:
-        - download: current
-          artifact: working
         - checkout: HelmRepo
           path: assemblyline-helm-chart
           persistCredentials: true
@@ -325,7 +323,7 @@ stages:
 
             if [[ "$TAG" == *stable* ]]
             then
-              cd $(Agent.BuildDirectory)/assemblyline-helm-chart
+              git checkout master
               chmod -R a+rw .
               sed -i 's/release: ".*"/release: '"$TAG"'/g' assemblyline/values.yaml
               git add .
@@ -335,15 +333,13 @@ stages:
               git push
             fi
 
-          workingDirectory: $(Pipeline.Workspace)/working/
+          workingDirectory: $(Pipeline.Workspace)/assemblyline-helm-chart
           displayName: "Patch the default release version to the latest stable"
           retryCountOnTaskFailure: 3
 
     - job: update_docker_release
       displayName: "Update default release in Docker appliance"
       steps:
-        - download: current
-          artifact: working
         - checkout: HelmRepo
           path: assemblyline-docker-compose
           persistCredentials: true
@@ -352,7 +348,7 @@ stages:
 
             if [[ "$TAG" == *stable* ]]
             then
-              cd $(Agent.BuildDirectory)/assemblyline-docker-compose
+              git checkout master
               chmod -R a+rw .
               sed -i 's/AL_VERSION=.*/AL_VERSION='$TAG'/g' .env
               git add .
@@ -362,7 +358,7 @@ stages:
               git push
             fi
 
-          workingDirectory: $(Pipeline.Workspace)/working/
+          workingDirectory: $(Pipeline.Workspace)/assemblyline-docker-compose
           displayName: "Patch the default release version to the latest stable"
           retryCountOnTaskFailure: 3
 
