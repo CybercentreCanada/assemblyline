@@ -351,6 +351,7 @@ stages:
             then
               git checkout master
               chmod -R a+rw .
+              ls -al
               sed -i 's/AL_VERSION=.*/AL_VERSION='$TAG'/g' .env
               git add .
               git status
