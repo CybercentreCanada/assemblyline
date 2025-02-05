@@ -325,7 +325,7 @@ stages:
 
             if [[ "$TAG" == *stable* ]]
             then
-              cd $(Agent.BuildDirectory)/assemblyline-helm-chart
+              cd $(Agent.BuildDirectory)/assemblyline-helm-chart && git checkout master
               chmod -R a+rw .
               sed -i 's/release: ".*"/release: '"$TAG"'/g' assemblyline/values.yaml
               git add .
@@ -352,7 +352,7 @@ stages:
 
             if [[ "$TAG" == *stable* ]]
             then
-              cd $(Agent.BuildDirectory)/assemblyline-docker-compose
+              cd $(Agent.BuildDirectory)/assemblyline-docker-compose && git checkout master
               chmod -R a+rw .
               sed -i 's/AL_VERSION=.*/AL_VERSION='$TAG'/g' .env
               git add .
