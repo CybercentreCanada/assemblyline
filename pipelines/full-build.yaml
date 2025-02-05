@@ -340,7 +340,7 @@ stages:
     - job: update_docker_release
       displayName: "Update default release in Docker appliance"
       steps:
-        - checkout: HelmRepo
+        - checkout: DockerRepo
           path: assemblyline-docker-compose
           persistCredentials: true
         - script: |
