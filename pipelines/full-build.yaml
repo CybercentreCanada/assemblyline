@@ -53,6 +53,15 @@ resources:
     type: github
     endpoint: github-repo-sa
     name: CybercentreCanada/assemblyline4_docs
+  - repository: DockerRepo
+    type: github
+    endpoint: github-repo-sa
+    name: CybercentreCanada/assemblyline-docker-compose
+  - repository: HelmRepo
+    type: github
+    endpoint: github-repo-sa
+    name: CybercentreCanada/assemblyline-helm-chart
+
 
 stages:
   ### BUILDING ###
@@ -303,6 +312,56 @@ stages:
             readme_path: $(README_PATH)
 
 
+    - job: update_helm_release
+      displayName: "Update default release in Helm chart"
+      steps:
+        - checkout: HelmRepo
+          path: assemblyline-helm-chart
+          persistCredentials: true
+        - script: |
+            set -exv  # Echo commands before they are run
+
+            if [[ "$TAG" == *stable* ]]
+            then
+              git checkout master
+              chmod -R a+rw .
+              sed -i 's/release: ".*"/release: '"$TAG"'/g' assemblyline/values.yaml
+              git add .
+              git config --global user.email "assemblyline@cyber.gc.ca"
+              git config --global user.name "Azure Pipeline"
+              git commit -m "Pipeline: Release $TAG"
+              git push
+            fi
+
+          workingDirectory: $(Pipeline.Workspace)/assemblyline-helm-chart
+          displayName: "Patch the default release version to the latest stable"
+          retryCountOnTaskFailure: 3
+
+    - job: update_docker_release
+      displayName: "Update default release in Docker appliance"
+      steps:
+        - checkout: DockerRepo
+          path: assemblyline-docker-compose
+          persistCredentials: true
+        - script: |
+            set -exv  # Echo commands before they are run
+
+            if [[ "$TAG" == *stable* ]]
+            then
+              git checkout master
+              chmod -R a+rw .
+              sed -i 's/AL_VERSION=.*/AL_VERSION='$TAG'/g' .env
+              git add .
+              git config --global user.email "assemblyline@cyber.gc.ca"
+              git config --global user.name "Azure Pipeline"
+              git commit -m "Pipeline: Release $TAG"
+              git push
+            fi
+
+          workingDirectory: $(Pipeline.Workspace)/assemblyline-docker-compose
+          displayName: "Patch the default release version to the latest stable"
+          retryCountOnTaskFailure: 3
+
     - job: update_odm_docs
       displayName: "Update Assemblyline4 Documentation"
       steps:
@@ -319,20 +378,21 @@ stages:
         - script: |
             set -exv  # Echo commands before they are run
 
-            # Prepare output directory
-            cp -rf $(Agent.BuildDirectory)/assemblyline4_docs .
-            (cd assemblyline4_docs && git checkout master)
-            chmod -R a+rw ./assemblyline4_docs
-
-            # Generate documentation from script
-            docker run -v $PWD/assemblyline4_docs:/tmp/assemblyline4_docs:rw \
-                       -v $PWD/assemblyline-base:/tmp/assemblyline-base:ro \
-                       -v $PWD/gen_docs.py:/tmp/gen_docs.py:ro \
-                       -w /tmp \
-                       cccstemp.azurecr.io/assemblyline:${TAG} \
-                       /bin/bash -c 'pip install mkdocs-material==7.3.6 mkdocs-static-i18n && python gen_docs.py . "/assemblyline4_docs"'
             if [[ "$TAG" == *stable* ]]
             then
+              # Prepare output directory
+              cp -rf $(Agent.BuildDirectory)/assemblyline4_docs .
+              (cd assemblyline4_docs && git checkout master)
+              chmod -R a+rw ./assemblyline4_docs
+
+              # Generate documentation from script
+              docker run -v $PWD/assemblyline4_docs:/tmp/assemblyline4_docs:rw \
+                        -v $PWD/assemblyline-base:/tmp/assemblyline-base:ro \
+                        -v $PWD/gen_docs.py:/tmp/gen_docs.py:ro \
+                        -w /tmp \
+                        cccstemp.azurecr.io/assemblyline:${TAG} \
+                        /bin/bash -c 'pip install mkdocs-material==7.3.6 mkdocs-static-i18n && python gen_docs.py . "/assemblyline4_docs"'
+
               # Commit documentation changes (if any) to Documentation repo
               cd assemblyline4_docs
               if [[ `git status --porcelain` ]]; then
