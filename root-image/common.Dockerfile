@@ -7,3 +7,6 @@ RUN apt-get update && apt-get -yy upgrade && rm -rf /var/lib/apt/lists/*
 RUN apt-get update \
   && apt-get install -yy libffi8 libfuzzy2 libmagic1 git\
   && rm -rf /var/lib/apt/lists/*
+
+# Update setuptools package
+pip install -U setuptools
