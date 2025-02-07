@@ -16,7 +16,7 @@ stages:
               containerRegistry: cccstemp
           - script: |
               set -exv  # Echo commands before they are run
-              if [[ "$TAG" == *stable* ]]; then export BUILD_KIND=stable; else export BUILD_KIND=dev; fi
+              if [[ "$TAG" == *stable* ]]; then export BUILD_KIND=stable; else export BUILD_KIND=latest; fi
               export VERSION=${TAG/stable}
               export VERSION=${VERSION/beta/b}
               export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_KIND}"

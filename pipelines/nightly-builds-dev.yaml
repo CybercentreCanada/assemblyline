@@ -16,4 +16,4 @@ pool:
 extends:
   template: templates/stages/build-nightly.yaml
   parameters:
-    build_type: "dev"
+    build_type: "latest"
