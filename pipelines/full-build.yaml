@@ -325,7 +325,7 @@ stages:
             then
               git checkout master
               chmod -R a+rw .
-              sed -i 's/release: ".*"/release: '"$TAG"'/g' assemblyline/values.yaml
+              sed -i 's/release: .*/release: '"$TAG"'/g' assemblyline/values.yaml
               git add .
               git config --global user.email "assemblyline@cyber.gc.ca"
               git config --global user.name "Azure Pipeline"
