@@ -9,4 +9,4 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 # Update setuptools package
-pip install -U setuptools
+RUN pip install -U setuptools
