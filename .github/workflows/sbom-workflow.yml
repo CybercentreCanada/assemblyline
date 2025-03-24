@@ -26,7 +26,7 @@ jobs:
         run: syft dir:. -o cyclonedx-json > repo-sbom.json
 
       - name: Upload SBOM as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: sbom-file
           path: repo-sbom.json
