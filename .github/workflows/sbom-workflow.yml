@@ -1,7 +1,11 @@
 name: Generate SBOM with Syft
 
 on:
-  workflow_dispatch: 
+  push:
+    branches:
+      - sbom-workflow
+  workflow_dispatch:
+    
 
 permissions:
   contents: write  
