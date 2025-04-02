@@ -7,7 +7,7 @@ trigger:
 pr: none
 
 pool:
-  vmImage: "ubuntu-20.04"
+  vmImage: "ubuntu-latest"
 
 variables:
   TAG: ${{ replace(variables['Build.SourceBranch'], 'refs/tags/v', '') }}
