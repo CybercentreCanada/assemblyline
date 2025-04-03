@@ -35,7 +35,7 @@ jobs:
           curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
 
       - name: Generate SBOM for code
-        run: syft dir:. -o cyclonedx-json > repo-sbom.json
+        run: syft requirements.txt -o cyclonedx-json > repo-sbom.json
 
       - name: Upload SBOM as artifact
         uses: actions/upload-artifact@v4
