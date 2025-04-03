@@ -50,5 +50,7 @@ submission:
       display_name: "Static Analysis"
       params:
         type: strict_ingest
+        services:
+          excluded: ["Dynamic Analysis"]
 ui:
   enforce_quota: false
