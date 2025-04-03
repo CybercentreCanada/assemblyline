@@ -17,28 +17,22 @@ jobs:
       - name: Checkout the code
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Download Syft
+        uses: anchore/sbom-action/download-syft@v0
+        id: download-syft
         with:
-          python-version: '3.12'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          if [ ! -f "requirements.txt" ]; then
-            pip freeze > requirements.txt
-          fi
-          pip install -r requirements.txt
-
-      - name: Install Syft
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
-
-      - name: Generate SBOM for code
-        run: syft requirements.txt -o cyclonedx-json > repo-sbom.json
+          syft-version: "v1.19.0"
+      
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: spdx-json
+          artifact-name: sbom.spdx
+          
 
       - name: Upload SBOM as artifact
         uses: actions/upload-artifact@v4
         with:
           name: sbom-file
-          path: repo-sbom.json
+          path: sbom.spdx.json
