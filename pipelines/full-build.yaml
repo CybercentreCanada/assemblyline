@@ -198,6 +198,10 @@ stages:
         - checkout: none
         - download: current
           artifact: working
+        - task: UsePythonVersion@0
+          displayName: Set python version
+          inputs:
+            versionSpec: 3.11
         - script: |
             set -exv  # Echo commands before they are run
             sudo env "PATH=$PATH" python -m pip install --no-cache-dir -U packaging twine
