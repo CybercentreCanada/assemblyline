@@ -200,7 +200,7 @@ stages:
           artifact: working
         - script: |
             set -exv  # Echo commands before they are run
-            sudo env "PATH=$PATH" python -m pip install --no-cache-dir -U twine
+            sudo env "PATH=$PATH" python -m pip install --no-cache-dir -U packaging twine
             ls dist
             twine upload --skip-existing dist/*
           workingDirectory: $(Pipeline.Workspace)/working/
