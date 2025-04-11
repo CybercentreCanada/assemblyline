@@ -198,9 +198,13 @@ stages:
         - checkout: none
         - download: current
           artifact: working
+        - task: UsePythonVersion@0
+          displayName: Set python version
+          inputs:
+            versionSpec: 3.11
         - script: |
             set -exv  # Echo commands before they are run
-            sudo env "PATH=$PATH" python -m pip install --no-cache-dir -U 'urllib3<2' twine
+            sudo env "PATH=$PATH" python -m pip install --no-cache-dir -U packaging twine
             ls dist
             twine upload --skip-existing dist/*
           workingDirectory: $(Pipeline.Workspace)/working/
