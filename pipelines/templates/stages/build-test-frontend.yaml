@@ -11,27 +11,31 @@ stages:
           - download: current
             artifact: working
           - task: NodeTool@0
-            displayName: 'Use Node 18.x'
+            displayName: 'Use Node 22.x'
             inputs:
-              versionSpec: 18.x
+              versionSpec: 22.x
+          - script: |
+                npm install -g pnpm
+
+            displayName: 'Install PNPM'
           - script: |
               set -xv  # Echo commands before they are run
-              yarn install
-              yarn run tsc
+              pnpm install
+              pnpm run tsc
 
             workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend/
             displayName: TypeScript Frontend
           - script: |
               set -xv  # Echo commands before they are run
-              yarn install
-              yarn run build-test
+              pnpm install
+              pnpm run build-test
 
             workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend/
             displayName: Test Frontend
           - script: |
               set -xv  # Echo commands before they are run
-              yarn install
-              yarn run build-lint
+              pnpm install
+              pnpm run build-lint
 
             workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend/
             displayName: ESLint Frontend
