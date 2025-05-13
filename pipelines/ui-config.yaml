@@ -53,4 +53,5 @@ submission:
         services:
           excluded: ["Dynamic Analysis"]
 ui:
+  debug: true
   enforce_quota: false
