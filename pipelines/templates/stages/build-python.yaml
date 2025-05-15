@@ -38,7 +38,7 @@ stages:
               git submodule foreach git pull
               git submodule foreach git tag ${TAG}
               git submodule foreach git push origin ${TAG}
-              sudo env "PATH=$PATH" python -m pip install --no-cache-dir -U wheel cython pip build
+              sudo env "PATH=$PATH" "PIP_USE_PEP517=true" python -m pip install --no-cache-dir -U wheel cython pip build
 
               # Build base
               cd assemblyline-base
