@@ -1,12 +1,14 @@
+import os
+import re
+from collections import defaultdict
 from importlib.machinery import SourceFileLoader
 from inspect import isclass
-from assemblyline.odm.base import Model
-from collections import defaultdict
 from sys import argv
 
-import os
 import yaml
-import re
+from mkdocs.utils.yaml import yaml_load
+
+from assemblyline.odm.base import Model
 
 odm_docs = defaultdict(list)
 
@@ -66,9 +68,7 @@ def main(root_dir, site_prefix=None):
     create_ODM_docs(os.path.join(BASE_PATH, "odm/models"), odm_docs['models'])
     create_ODM_docs(os.path.join(BASE_PATH, "odm/messages"), odm_docs['messages'])
 
-    yaml.add_multi_constructor('', lambda loader, suffix, node: None)
-
-    mkdocs = yaml.load(open(os.path.join(DOCS_BASE_PATH, "mkdocs.yml"), "r").read(), Loader=yaml.Loader)
+    mkdocs = yaml_load(open(os.path.join(DOCS_BASE_PATH, "mkdocs.yml"), "r").read())
     mkdocs['nav'][7]['Data Ontology'][1]['Models'] = odm_docs['models']
     mkdocs['nav'][7]['Data Ontology'][2]['Messages'] = odm_docs['messages']
     yaml.dump(mkdocs, open(os.path.join(DOCS_BASE_PATH, "mkdocs.yml"), "w"), allow_unicode=True)
