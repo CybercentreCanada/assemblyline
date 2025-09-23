@@ -396,7 +396,7 @@ stages:
                         -v $PWD/gen_docs.py:/tmp/gen_docs.py:ro \
                         -w /tmp \
                         cccstemp.azurecr.io/assemblyline:${TAG} \
-                        /bin/bash -c 'pip install mkdocs-material==7.3.6 mkdocs-static-i18n && python gen_docs.py . "/assemblyline4_docs"'
+                        /bin/bash -c 'pip install mkdocs-material mkdocs-static-i18n && python gen_docs.py . "/assemblyline4_docs"'
 
               # Commit documentation changes (if any) to Documentation repo
               cd assemblyline4_docs
