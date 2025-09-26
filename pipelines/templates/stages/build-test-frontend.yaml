@@ -10,33 +10,33 @@ stages:
           - checkout: none
           - download: current
             artifact: working
+
           - task: NodeTool@0
             displayName: 'Use Node 22.x'
             inputs:
               versionSpec: 22.x
-          - script: |
-                npm install -g pnpm
 
+          - script: |
+              npm install -g pnpm@10.8.1
+              pnpm --version
             displayName: 'Install PNPM'
+
           - script: |
               set -xv  # Echo commands before they are run
               pnpm install
-              pnpm run tsc
-
+              pnpm run typecheck
             workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend/
             displayName: TypeScript Frontend
+
           - script: |
               set -xv  # Echo commands before they are run
-              pnpm install
-              pnpm run build-test
-
+              pnpm run test:ci
             workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend/
             displayName: Test Frontend
+
           - script: |
               set -xv  # Echo commands before they are run
-              pnpm install
-              pnpm run build-lint
-
+              pnpm run lint:ci
             workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend/
             displayName: ESLint Frontend
 
@@ -47,11 +47,13 @@ stages:
           - checkout: none
           - download: current
             artifact: working
+
           - task: Docker@2
             displayName: Login to docker registry
             inputs:
               command: login
               containerRegistry: cccstemp
+
           - script: |
               set -exv  # Echo commands before they are run
               if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
