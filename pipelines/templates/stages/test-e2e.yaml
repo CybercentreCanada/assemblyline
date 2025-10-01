@@ -1,10 +1,10 @@
 stages:
   - stage: test_e2e
-    displayName: Test E2E
+    displayName: Playwright E2E Tests
     dependsOn: [build_ui, build_frontend]
     jobs:
       - job: test_e2e
-        timeoutInMinutes: 15
+        timeoutInMinutes: 20
         services:
           elasticsearch: elasticsearch
           redis: redis
@@ -21,6 +21,7 @@ stages:
               command: login
               containerRegistry: cccstemp
 
+          # --- Start service containers ---
           - script: |
               set -e
 
@@ -58,7 +59,26 @@ stages:
               wget http://localhost:5000/healthz/ready --retry-on-http-error=502 --retry-on-http-error=503 --waitretry=10 --retry-connrefused
               wget http://localhost:5002/healthz/ready --retry-on-http-error=502 --retry-on-http-error=503 --waitretry=10 --retry-connrefused
               wget https://localhost --no-check-certificate --retry-on-http-error=502 --waitretry=10 --retry-connrefused
+            displayName: Start Services
 
+          # --- Create default test data (users etc.) ---
+          - script: |
+              echo "--- Creating test data (default users) ---"
+              docker run --rm --network host \
+                -v $(Pipeline.Workspace)/working/pipelines/:/etc/assemblyline/ \
+                -v $(Pipeline.Workspace)/working/:/opt/alv4/ \
+                -w /opt/alv4/assemblyline-base/assemblyline/odm/random_data/ \
+                -e DEV_ADMIN_PASS=$DEV_ADMIN_PASS \
+                -e DEV_USER_PASS=$DEV_USER_PASS \
+                cccs/assemblyline_dev:4.6.1 \
+                python3 create_test_data.py nosvc nosigs
+            env:
+              DEV_ADMIN_PASS: $(DEV_ADMIN_PASS)
+              DEV_USER_PASS: $(DEV_USER_PASS)
+            displayName: Create Test Data
+
+          # --- Run Playwright tests ---
+          - script: |
               echo "--- Running Playwright E2E Tests ---"
               docker run --rm \
                 -v $(Pipeline.Workspace)/working/assemblyline-ui-frontend:/app \
@@ -73,7 +93,7 @@ stages:
                   npx playwright install chromium firefox webkit &&
                   pnpm run e2e:ci
                 "
-            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui
+            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend
             displayName: Run Playwright E2E Tests
 
           # --- Log collection if failure ---
