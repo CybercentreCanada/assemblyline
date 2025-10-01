@@ -82,6 +82,7 @@ stages:
                 -e EXTERNAL_IP=127.0.0.1 \
                 mcr.microsoft.com/playwright:v1.54.2-jammy \
                 /bin/bash -c "
+                  npm install -g pnpm@10.8.1 &&
                   npx playwright install chromium firefox webkit &&
                   pnpm run e2e:ci
                 "
