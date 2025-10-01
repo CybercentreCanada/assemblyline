@@ -64,7 +64,9 @@ stages:
                 -v $(Pipeline.Workspace)/working/assemblyline-ui-frontend:/app \
                 -w /app \
                 --network host \
-                mcr.microsoft.com/playwright:v1.48.2-jammy \
+                -e EXTERNAL_IP=127.0.0.1 \
+                -e TEST_BASE_URL=http://127.0.0.1 \
+                mcr.microsoft.com/playwright:v1.54.2-jammy \
                 /bin/bash -c "
                   npm install -g pnpm@10.8.1 &&
                   pnpm install &&
