@@ -68,13 +68,8 @@ stages:
                 -v $(Pipeline.Workspace)/working/pipelines/:/etc/assemblyline/ \
                 -v $(Pipeline.Workspace)/working/:/opt/alv4/ \
                 -w /opt/alv4/assemblyline-base/assemblyline/odm/random_data/ \
-                -e DEV_ADMIN_PASS=$DEV_ADMIN_PASS \
-                -e DEV_USER_PASS=$DEV_USER_PASS \
                 cccs/assemblyline_dev:4.6.1 \
                 python3 create_test_data.py nosvc nosigs
-            env:
-              DEV_ADMIN_PASS: $(DEV_ADMIN_PASS)
-              DEV_USER_PASS: $(DEV_USER_PASS)
             displayName: Create Test Data
 
           # --- Run Playwright tests ---
@@ -85,11 +80,8 @@ stages:
                 -w /app \
                 --network host \
                 -e EXTERNAL_IP=127.0.0.1 \
-                -e TEST_BASE_URL=http://127.0.0.1 \
                 mcr.microsoft.com/playwright:v1.54.2-jammy \
                 /bin/bash -c "
-                  npm install -g pnpm@10.8.1 &&
-                  pnpm install &&
                   npx playwright install chromium firefox webkit &&
                   pnpm run e2e:ci
                 "
