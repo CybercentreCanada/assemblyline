@@ -1,0 +1,87 @@
+stages:
+  - stage: test_e2e
+    displayName: Test E2E
+    dependsOn: [build_ui, build_frontend]
+    jobs:
+      - job: test_e2e
+        timeoutInMinutes: 15
+        services:
+          elasticsearch: elasticsearch
+          redis: redis
+          minio: minio
+        displayName: Playwright E2E Tests
+        steps:
+          - checkout: none
+          - download: current
+            artifact: working
+
+          - task: Docker@2
+            displayName: Login to docker registry
+            inputs:
+              command: login
+              containerRegistry: cccstemp
+
+          - script: |
+              set -e
+
+              echo "--- Starting service containers ---"
+
+              docker run -d --name ui --network host \
+                -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml \
+                -v $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml \
+                --restart on-failure \
+                cccstemp.azurecr.io/assemblyline-ui:$TAG
+
+              docker run -d --name socketsrv --network host \
+                -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml \
+                -v $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml \
+                --restart on-failure \
+                cccstemp.azurecr.io/assemblyline-socketio:$TAG
+
+              docker run -d --name frontend --network host \
+                --restart on-failure \
+                cccstemp.azurecr.io/assemblyline-ui-frontend:$TAG
+
+              docker run -d --name nginx --network host \
+                --restart on-failure \
+                -e "FRONTEND_HOST=127.0.0.1" \
+                -e "UI_HOST=127.0.0.1" \
+                -e "SOCKET_HOST=127.0.0.1" \
+                -e "TEMPLATE=minimal" \
+                -e "FQDN=localhost" \
+                -e "ACCESS_LOG=/dev/stdout" \
+                -e "ERROR_LEVEL=info" \
+                cccs/nginx-ssl-frontend
+
+              echo "--- Waiting for services ---"
+              wget http://localhost:5000/healthz/ready --retry-on-http-error=502 --retry-on-http-error=503 --waitretry=10 --retry-connrefused
+              wget http://localhost:5002/healthz/ready --retry-on-http-error=502 --retry-on-http-error=503 --waitretry=10 --retry-connrefused
+              wget https://localhost --no-check-certificate --retry-on-http-error=502 --waitretry=10 --retry-connrefused
+
+              echo "--- Running Playwright E2E Tests ---"
+              docker run --rm \
+                -v $(Pipeline.Workspace)/working/assemblyline-ui:/app \
+                -w /app/frontend \
+                --network host \
+                mcr.microsoft.com/playwright:v1.48.2-jammy \
+                /bin/bash -c "
+                  npm ci &&
+                  npx playwright install --with-deps &&
+                  npx playwright test --reporter=line
+                "
+            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui
+            displayName: Run Playwright E2E Tests
+
+          # --- Log collection if failure ---
+          - script: docker logs ui
+            condition: failed()
+            displayName: UI Logs
+          - script: docker logs socketsrv
+            condition: failed()
+            displayName: SocketIO Logs
+          - script: docker logs frontend
+            condition: failed()
+            displayName: Frontend Logs
+          - script: docker logs nginx
+            condition: failed()
+            displayName: NGINX Logs
