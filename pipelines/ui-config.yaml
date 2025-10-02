@@ -55,6 +55,13 @@ submission:
           excluded: ["Dynamic Analysis"]
       restricted_params:
         submission: ["ignore_recursion_prevention"]
+
+system:
+  type: staging
+
 ui:
   debug: true
   enforce_quota: false
+
+  tos: |
+    ### Terms of Services
