@@ -80,6 +80,9 @@ stages:
                 -w /app \
                 --network host \
                 -e EXTERNAL_IP=127.0.0.1 \
+                -e TEST_SHORT_TIMEOUT=3000 \
+                -e TEST_MEDIUM_TIMEOUT=8000 \
+                -e TEST_LONG_TIMEOUT=60000 \
                 mcr.microsoft.com/playwright:v1.54.2-jammy \
                 /bin/bash -c "
                   npm install -g pnpm@10.8.1 &&
