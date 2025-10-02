@@ -103,3 +103,4 @@ stages:
           - script: docker logs nginx
             condition: failed()
             displayName: NGINX Logs
+        continueOnError: true
