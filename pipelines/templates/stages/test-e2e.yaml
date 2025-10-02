@@ -28,13 +28,13 @@ stages:
               echo "--- Starting service containers ---"
 
               docker run -d --name ui --network host \
-                -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml \
+                -v $(Pipeline.Workspace)/working/pipelines/templates/stages/e2e-config.yaml:/etc/assemblyline/config.yml \
                 -v $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml \
                 --restart on-failure \
                 cccstemp.azurecr.io/assemblyline-ui:$TAG
 
               docker run -d --name socketsrv --network host \
-                -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml \
+                -v $(Pipeline.Workspace)/working/pipelines/templates/stages/e2e-config.yaml:/etc/assemblyline/config.yml \
                 -v $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml \
                 --restart on-failure \
                 cccstemp.azurecr.io/assemblyline-socketio:$TAG
