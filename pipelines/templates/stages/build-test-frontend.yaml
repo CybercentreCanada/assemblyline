@@ -1,4 +1,5 @@
 stages:
+  - stage: build_frontend
     displayName: Test & Build Frontend
     dependsOn: build_python
     jobs:
