@@ -1,7 +1,6 @@
 auth:
   ldap:
     enabled: true
-    uri: ldap://openldap:389
     uid_field: "cn"
     bind_user: cn=admin,dc=assemblyline,dc=local
     bind_pass: admin
