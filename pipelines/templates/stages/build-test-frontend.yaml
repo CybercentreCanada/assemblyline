@@ -4,7 +4,7 @@ stages:
     dependsOn: build_python
     jobs:
       - job: frontend_ci
-        displayName: Frontend CI (Lint, Typecheck, Test)
+        displayName: Frontend CI (Typecheck, Lint, Test)
         timeoutInMinutes: 10
         pool:
           vmImage: ubuntu-latest
@@ -19,6 +19,12 @@ stages:
             inputs:
               versionSpec: 22.x
 
+          # --- Ensure cache directories exist ---
+          - script: |
+              mkdir -p /home/vsts/.pnpm-store
+              mkdir -p $(Pipeline.Workspace)/working/assemblyline-ui-frontend/node_modules
+            displayName: Ensure cache directories exist
+
           # --- Cache PNPM store and node_modules ---
           - task: Cache@2
             inputs:
@@ -26,41 +32,37 @@ stages:
               restoreKeys: |
                 pnpm | "$(Agent.OS)"
               path: |
-                ~/.pnpm-store
+                /home/vsts/.pnpm-store
                 $(Pipeline.Workspace)/working/assemblyline-ui-frontend/node_modules
             displayName: Cache PNPM dependencies
 
+          # --- Install dependencies ---
           - script: |
-              npm install -g pnpm@10.8.1
-              pnpm config set store-dir ~/.pnpm-store
+              npm install -g pnpm@10.8.1 concurrently
+              pnpm config set store-dir /home/vsts/.pnpm-store
               pnpm install --frozen-lockfile
             workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend
-            displayName: Install Dependencies
+            displayName: Install dependencies
 
-          # --- Type Check + Lint + Tests (can run in parallel if needed) ---
+          # --- Run TypeScript, Lint, and Tests concurrently ---
           - script: |
-              echo "--- Running TypeScript Check ---"
-              pnpm run typecheck
+              echo "--- Running TypeScript, ESLint, and Tests concurrently ---"
+              pnpm concurrently \
+                -n "typecheck,lint,test" \
+                -c "blue,green,magenta" \
+                "pnpm run typecheck" \
+                "pnpm run lint:ci" \
+                "pnpm run test:ci"
             workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend
-            displayName: TypeScript Typecheck
+            displayName: Run CI Checks (Typecheck + Lint + Tests)
 
-          - script: |
-              echo "--- Running Vitest Unit Tests ---"
-              pnpm run test:ci
-            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend
-            displayName: Run Tests
-
-          - script: |
-              echo "--- Running ESLint ---"
-              pnpm run lint:ci
-            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend
-            displayName: ESLint
-
+      # --- Build job ---
       - job: build_frontend
         dependsOn: frontend_ci
         displayName: Build Frontend Docker Image
         pool:
           vmImage: ubuntu-latest
+
         steps:
           - checkout: none
           - download: current
@@ -71,20 +73,23 @@ stages:
             inputs:
               versionSpec: 22.x
 
+          # --- Restore PNPM cache ---
           - task: Cache@2
             inputs:
               key: 'pnpm | "$(Agent.OS)" | $(Pipeline.Workspace)/working/assemblyline-ui-frontend/pnpm-lock.yaml'
-              path: ~/.pnpm-store
+              path: /home/vsts/.pnpm-store
             displayName: Restore PNPM Cache (Build)
 
+          # --- Build Frontend ---
           - script: |
               npm install -g pnpm@10.8.1
-              pnpm config set store-dir ~/.pnpm-store
+              pnpm config set store-dir /home/vsts/.pnpm-store
               pnpm install --frozen-lockfile
               pnpm run build
             workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend
             displayName: Build Frontend Assets
 
+          # --- Build & Push Docker Image ---
           - task: Docker@2
             displayName: Login to docker registry
             inputs:
