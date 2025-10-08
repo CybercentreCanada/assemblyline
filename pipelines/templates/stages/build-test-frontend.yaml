@@ -4,7 +4,7 @@ stages:
     dependsOn: build_python
     jobs:
       - job: frontend_ci
-        displayName: Frontend CI (Typecheck, Lint, Test)
+        displayName: Test Frontend
         timeoutInMinutes: 10
         pool:
           vmImage: ubuntu-latest
@@ -19,27 +19,9 @@ stages:
             inputs:
               versionSpec: 22.x
 
-          # --- Ensure cache directories exist ---
-          - script: |
-              mkdir -p /home/vsts/.pnpm-store
-              mkdir -p $(Pipeline.Workspace)/working/assemblyline-ui-frontend/node_modules
-            displayName: Ensure cache directories exist
-
-          # --- Cache PNPM store and node_modules ---
-          - task: Cache@2
-            inputs:
-              key: 'pnpm | "$(Agent.OS)" | $(Pipeline.Workspace)/working/assemblyline-ui-frontend/pnpm-lock.yaml'
-              restoreKeys: |
-                pnpm | "$(Agent.OS)"
-              path: |
-                /home/vsts/.pnpm-store
-                $(Pipeline.Workspace)/working/assemblyline-ui-frontend/node_modules
-            displayName: Cache PNPM dependencies
-
           # --- Install dependencies ---
           - script: |
               npm install -g pnpm@10.8.1 concurrently
-              pnpm config set store-dir /home/vsts/.pnpm-store
               pnpm install --frozen-lockfile
             workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend
             displayName: Install dependencies
@@ -59,7 +41,7 @@ stages:
       # --- Build job ---
       - job: build_frontend
         dependsOn: frontend_ci
-        displayName: Build Frontend Docker Image
+        displayName: Build Frontend Image
         pool:
           vmImage: ubuntu-latest
 
@@ -73,17 +55,9 @@ stages:
             inputs:
               versionSpec: 22.x
 
-          # --- Restore PNPM cache ---
-          - task: Cache@2
-            inputs:
-              key: 'pnpm | "$(Agent.OS)" | $(Pipeline.Workspace)/working/assemblyline-ui-frontend/pnpm-lock.yaml'
-              path: /home/vsts/.pnpm-store
-            displayName: Restore PNPM Cache (Build)
-
           # --- Build Frontend ---
           - script: |
               npm install -g pnpm@10.8.1
-              pnpm config set store-dir /home/vsts/.pnpm-store
               pnpm install --frozen-lockfile
               pnpm run build
             workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend
