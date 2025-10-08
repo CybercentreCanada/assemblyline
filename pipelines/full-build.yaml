@@ -45,7 +45,7 @@ resources:
       ports:
         - 9000:9000
     - container: openldap
-      image: docker.io/bitnami/openldap:2.6
+      image: docker.io/bitnamilegacy/openldap:2.6
       env:
         LDAP_PORT_NUMBER: 389
         LDAP_ROOT: dc=assemblyline,dc=local
