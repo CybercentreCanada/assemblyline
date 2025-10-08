@@ -3,17 +3,19 @@ stages:
     displayName: Build & Test Frontend
     dependsOn: build_python
     jobs:
-      - job: frontend_ci
-        displayName: Test Frontend
-        timeoutInMinutes: 10
+      - job: build_and_test_frontend
+        displayName: Test + Build Frontend Image
+        timeoutInMinutes: 20
         pool:
           vmImage: ubuntu-latest
 
         steps:
+          # --- Download artifacts from previous stage ---
           - checkout: none
           - download: current
             artifact: working
 
+          # --- Use Node.js 22.x ---
           - task: NodeTool@0
             displayName: 'Use Node 22.x'
             inputs:
@@ -38,38 +40,21 @@ stages:
             workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend
             displayName: Run CI Checks (Typecheck + Lint + Tests)
 
-      # --- Build job ---
-      - job: build_frontend
-        dependsOn: frontend_ci
-        displayName: Build Frontend Image
-        pool:
-          vmImage: ubuntu-latest
-
-        steps:
-          - checkout: none
-          - download: current
-            artifact: working
-
-          - task: NodeTool@0
-            displayName: 'Use Node 22.x'
-            inputs:
-              versionSpec: 22.x
-
-          # --- Build Frontend ---
+          # --- Build Frontend Assets ---
           - script: |
-              npm install -g pnpm@10.8.1
-              pnpm install --frozen-lockfile
+              echo "--- Building frontend assets ---"
               pnpm run build
             workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend
             displayName: Build Frontend Assets
 
-          # --- Build & Push Docker Image ---
+          # --- Login to Docker Registry ---
           - task: Docker@2
             displayName: Login to docker registry
             inputs:
               command: login
               containerRegistry: cccstemp
 
+          # --- Build & Push Docker Image ---
           - script: |
               set -exv
               if [[ "$TAG" == *stable* ]]; then BUILD_TYPE=stable; else BUILD_TYPE=latest; fi
