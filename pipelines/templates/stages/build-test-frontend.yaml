@@ -1,11 +1,14 @@
 stages:
   - stage: build_frontend
-    displayName: Build Frontend
+    displayName: Build & Test Frontend
     dependsOn: build_python
     jobs:
-      - job: test_frontend
+      - job: frontend_ci
+        displayName: Frontend CI (Lint, Typecheck, Test)
         timeoutInMinutes: 10
-        displayName: Test Frontend Code
+        pool:
+          vmImage: ubuntu-latest
+
         steps:
           - checkout: none
           - download: current
@@ -16,37 +19,71 @@ stages:
             inputs:
               versionSpec: 22.x
 
+          # --- Cache PNPM store and node_modules ---
+          - task: Cache@2
+            inputs:
+              key: 'pnpm | "$(Agent.OS)" | $(Pipeline.Workspace)/working/assemblyline-ui-frontend/pnpm-lock.yaml'
+              restoreKeys: |
+                pnpm | "$(Agent.OS)"
+              path: |
+                ~/.pnpm-store
+                $(Pipeline.Workspace)/working/assemblyline-ui-frontend/node_modules
+            displayName: Cache PNPM dependencies
+
           - script: |
               npm install -g pnpm@10.8.1
-              pnpm --version
-            displayName: 'Install PNPM'
+              pnpm config set store-dir ~/.pnpm-store
+              pnpm install --frozen-lockfile
+            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend
+            displayName: Install Dependencies
 
+          # --- Type Check + Lint + Tests (can run in parallel if needed) ---
           - script: |
-              set -xv  # Echo commands before they are run
-              pnpm install
+              echo "--- Running TypeScript Check ---"
               pnpm run typecheck
-            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend/
-            displayName: TypeScript Frontend
+            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend
+            displayName: TypeScript Typecheck
 
           - script: |
-              set -xv  # Echo commands before they are run
+              echo "--- Running Vitest Unit Tests ---"
               pnpm run test:ci
-            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend/
-            displayName: Test Frontend
+            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend
+            displayName: Run Tests
 
           - script: |
-              set -xv  # Echo commands before they are run
+              echo "--- Running ESLint ---"
               pnpm run lint:ci
-            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend/
-            displayName: ESLint Frontend
+            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend
+            displayName: ESLint
 
       - job: build_frontend
-        dependsOn: test_frontend
-        displayName: Build Frontend Image
+        dependsOn: frontend_ci
+        displayName: Build Frontend Docker Image
+        pool:
+          vmImage: ubuntu-latest
         steps:
           - checkout: none
           - download: current
             artifact: working
+
+          - task: NodeTool@0
+            displayName: 'Use Node 22.x'
+            inputs:
+              versionSpec: 22.x
+
+          - task: Cache@2
+            inputs:
+              key: 'pnpm | "$(Agent.OS)" | $(Pipeline.Workspace)/working/assemblyline-ui-frontend/pnpm-lock.yaml'
+              path: ~/.pnpm-store
+            displayName: Restore PNPM Cache (Build)
+
+          - script: |
+              npm install -g pnpm@10.8.1
+              pnpm config set store-dir ~/.pnpm-store
+              pnpm install --frozen-lockfile
+              pnpm run build
+            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend
+            displayName: Build Frontend Assets
 
           - task: Docker@2
             displayName: Login to docker registry
@@ -55,14 +92,19 @@ stages:
               containerRegistry: cccstemp
 
           - script: |
-              set -exv  # Echo commands before they are run
-              if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
-              export VERSION=${TAG/stable}
-              export VERSION=${VERSION/beta/b}
-              export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
+              set -exv
+              if [[ "$TAG" == *stable* ]]; then BUILD_TYPE=stable; else BUILD_TYPE=latest; fi
+              VERSION=${TAG/stable}
+              VERSION=${VERSION/beta/b}
+              SERIES="$(expr $TAG : '\([0-9]\+\.[0-9]\+\.\)' )${BUILD_TYPE}"
+              IMAGE=cccstemp.azurecr.io/assemblyline-ui-frontend
 
-              export IMAGE=cccstemp.azurecr.io/assemblyline-ui-frontend
-              docker build --build-arg version=$VERSION -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES .
-              docker push $IMAGE -q --all-tags
-            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend/
-            displayName: Build Frontend
+              docker build \
+                --build-arg version=$VERSION \
+                -t $IMAGE:$TAG \
+                -t $IMAGE:$BUILD_TYPE \
+                -t $IMAGE:$SERIES \
+                .
+              docker push $IMAGE --all-tags
+            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend
+            displayName: Build & Push Docker Image
