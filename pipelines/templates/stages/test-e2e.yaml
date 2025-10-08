@@ -93,6 +93,14 @@ stages:
             workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend
             displayName: Run Playwright E2E Tests
 
+          # --- 📸 Publish Playwright screenshots, videos, and traces ---
+          - task: PublishPipelineArtifact@1
+            displayName: Publish Playwright Artifacts
+            condition: always() # Always upload, even if tests fail
+            inputs:
+              targetPath: '$(Pipeline.Workspace)/working/assemblyline-ui-frontend/playwright-report'
+              artifact: 'playwright-report'
+
           # --- Log collection if failure ---
           - script: docker logs ui
             condition: failed()
