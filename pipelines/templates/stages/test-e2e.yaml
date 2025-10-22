@@ -1,0 +1,117 @@
+stages:
+  - stage: test_e2e
+    displayName: Playwright E2E Tests
+    dependsOn: [build_ui, build_frontend]
+    jobs:
+      - job: test_e2e
+        timeoutInMinutes: 20
+        services:
+          elasticsearch: elasticsearch
+          redis: redis
+          minio: minio
+        displayName: Playwright E2E Tests
+        steps:
+          - checkout: none
+          - download: current
+            artifact: working
+
+          - task: Docker@2
+            displayName: Login to docker registry
+            inputs:
+              command: login
+              containerRegistry: cccstemp
+
+          # --- Start service containers ---
+          - script: |
+              set -e
+
+              echo "--- Starting service containers ---"
+
+              docker run -d --name ui --network host \
+                -v $(Pipeline.Workspace)/working/pipelines/templates/stages/e2e-config.yaml:/etc/assemblyline/config.yml \
+                -v $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml \
+                --restart on-failure \
+                cccstemp.azurecr.io/assemblyline-ui:$TAG
+
+              docker run -d --name socketsrv --network host \
+                -v $(Pipeline.Workspace)/working/pipelines/templates/stages/e2e-config.yaml:/etc/assemblyline/config.yml \
+                -v $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml \
+                --restart on-failure \
+                cccstemp.azurecr.io/assemblyline-socketio:$TAG
+
+              docker run -d --name frontend --network host \
+                --restart on-failure \
+                -e "EXTERNAL_IP=127.0.0.1" \
+                cccstemp.azurecr.io/assemblyline-ui-frontend:$TAG
+
+              docker run -d --name nginx --network host \
+                --restart on-failure \
+                -e "FRONTEND_HOST=127.0.0.1" \
+                -e "UI_HOST=127.0.0.1" \
+                -e "SOCKET_HOST=127.0.0.1" \
+                -e "TEMPLATE=minimal" \
+                -e "FQDN=localhost" \
+                -e "ACCESS_LOG=/dev/stdout" \
+                -e "ERROR_LEVEL=info" \
+                cccs/nginx-ssl-frontend
+
+              echo "--- Waiting for services ---"
+              wget http://localhost:5000/healthz/ready --retry-on-http-error=502 --retry-on-http-error=503 --waitretry=10 --retry-connrefused
+              wget http://localhost:5002/healthz/ready --retry-on-http-error=502 --retry-on-http-error=503 --waitretry=10 --retry-connrefused
+              wget https://localhost --no-check-certificate --retry-on-http-error=502 --waitretry=10 --retry-connrefused
+            displayName: Start Services
+
+          # --- Create default test data (users etc.) ---
+          - script: |
+              echo "--- Creating test data (default users) ---"
+              docker run --rm --network host \
+                -v $(Pipeline.Workspace)/working/pipelines/:/etc/assemblyline/ \
+                -v $(Pipeline.Workspace)/working/:/opt/alv4/ \
+                -w /opt/alv4/assemblyline-base/assemblyline/odm/random_data/ \
+                cccs/assemblyline_dev:4.6.1 \
+                python3 create_test_data.py nosvc nosigs
+            displayName: Create Test Data
+
+          # --- Run Playwright tests ---
+          - script: |
+              echo "--- Running Playwright E2E Tests ---"
+              docker run --rm \
+                -v $(Pipeline.Workspace)/working/assemblyline-ui-frontend:/app \
+                -w /app \
+                --network host \
+                -e EXTERNAL_IP=127.0.0.1 \
+                -e TEST_SHORT_TIMEOUT=3000 \
+                -e TEST_MEDIUM_TIMEOUT=8000 \
+                -e TEST_LONG_TIMEOUT=60000 \
+                mcr.microsoft.com/playwright:v1.54.2-jammy \
+                /bin/bash -c "
+                  npm install -g pnpm@10.8.1 &&
+                  pnpm install &&
+                  npx playwright install chromium firefox webkit &&
+                  pnpm run e2e:ci
+                "
+            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend
+            displayName: Run Playwright E2E Tests
+
+          # --- 📸 Publish Playwright screenshots, videos, and traces ---
+          - task: PublishPipelineArtifact@1
+            displayName: Publish Playwright Artifacts
+            condition: always() # Always upload, even if tests fail
+            inputs:
+              targetPath: '$(Pipeline.Workspace)/working/assemblyline-ui-frontend/playwright-report'
+              artifact: 'playwright-report'
+
+          # --- Log collection if failure ---
+          - script: docker logs ui
+            condition: failed()
+            displayName: UI Logs
+          - script: docker logs socketsrv
+            condition: failed()
+            displayName: SocketIO Logs
+          - script: docker logs frontend
+            condition: failed()
+            displayName: Frontend Logs
+          - script: docker logs nginx
+            condition: failed()
+            displayName: NGINX Logs
+        continueOnError: true

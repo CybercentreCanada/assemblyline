@@ -1,66 +1,77 @@
 stages:
   - stage: build_frontend
-    displayName: Build Frontend
+    displayName: Test & Build Frontend
     dependsOn: build_python
     jobs:
-      - job: test_frontend
+      - job: frontend_ci
+        displayName: Test Frontend
         timeoutInMinutes: 10
-        displayName: Test Frontend Code
+        pool:
+          vmImage: ubuntu-latest
+
         steps:
           - checkout: none
           - download: current
             artifact: working
+
           - task: NodeTool@0
             displayName: 'Use Node 22.x'
             inputs:
               versionSpec: 22.x
+
+          # --- Install dependencies ---
           - script: |
-                npm install -g pnpm
+              npm install -g pnpm@10.8.1 concurrently
+              pnpm install --frozen-lockfile
+            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend
+            displayName: Install dependencies
 
-            displayName: 'Install PNPM'
+          # --- Run TypeScript, Lint, and Tests concurrently ---
           - script: |
-              set -xv  # Echo commands before they are run
-              pnpm install
-              pnpm run tsc
+              echo "--- Running TypeScript, ESLint, and Tests concurrently ---"
+              pnpm concurrently \
+                -n "typecheck,lint,test" \
+                -c "blue,green,magenta" \
+                "pnpm run typecheck" \
+                "pnpm run lint:ci" \
+                "pnpm run test:ci"
+            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend
+            displayName: Run CI Checks (Typecheck + Lint + Tests)
 
-            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend/
-            displayName: TypeScript Frontend
-          - script: |
-              set -xv  # Echo commands before they are run
-              pnpm install
-              pnpm run build-test
-
-            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend/
-            displayName: Test Frontend
-          - script: |
-              set -xv  # Echo commands before they are run
-              pnpm install
-              pnpm run build-lint
-
-            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend/
-            displayName: ESLint Frontend
-
+      # --- Build job ---
       - job: build_frontend
-        dependsOn: test_frontend
+        dependsOn: frontend_ci
         displayName: Build Frontend Image
+        pool:
+          vmImage: ubuntu-latest
+
         steps:
           - checkout: none
           - download: current
             artifact: working
+
+          # --- Build & Push Docker Image ---
           - task: Docker@2
             displayName: Login to docker registry
             inputs:
               command: login
               containerRegistry: cccstemp
+
           - script: |
-              set -exv  # Echo commands before they are run
+              set -exv
               if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
               export VERSION=${TAG/stable}
               export VERSION=${VERSION/beta/b}
               export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
 
               export IMAGE=cccstemp.azurecr.io/assemblyline-ui-frontend
-              docker build --build-arg version=$VERSION -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES .
+
+              docker build \
+                --build-arg version=$VERSION \
+                -t $IMAGE:$TAG \
+                -t $IMAGE:$BUILD_TYPE \
+                -t $IMAGE:$SERIES \
+                .
               docker push $IMAGE -q --all-tags
             workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend/
             displayName: Build Frontend

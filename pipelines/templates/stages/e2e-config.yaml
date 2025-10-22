@@ -1,9 +1,3 @@
-auth:
-  ldap:
-    enabled: true
-    uid_field: "cn"
-    bind_user: cn=admin,dc=assemblyline,dc=local
-    bind_pass: admin
 core:
   alerter:
     delay: 0
@@ -51,16 +45,13 @@ submission:
           validator_type: keyword
     strict_schemes:
       - strict_ingest
-  profiles:
-    # Profile that will enforce metadata validation
-    - name: "static"
-      display_name: "Static Analysis"
-      params:
-        type: strict_ingest
-        services:
-          excluded: ["Dynamic Analysis"]
-      restricted_params:
-        submission: ["ignore_recursion_prevention"]
+
+system:
+  type: staging
+
 ui:
   debug: true
   enforce_quota: false
+
+  tos: |
+    ### Terms of Services

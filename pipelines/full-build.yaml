@@ -44,6 +44,17 @@ resources:
         MINIO_SECRET_KEY: Ch@ngeTh!sPa33w0rd
       ports:
         - 9000:9000
+    - container: openldap
+      image: docker.io/bitnamilegacy/openldap:2.6
+      env:
+        LDAP_PORT_NUMBER: 389
+        LDAP_ROOT: dc=assemblyline,dc=local
+        LDAP_ADMIN_PASSWORD: admin
+        LDAP_USERS: ldap_user
+        LDAP_PASSWORDS: ldap_password
+        LDAP_USER_OU: people
+      ports:
+        - 389:389        
   repositories:
   - repository: BuildRepo
     type: github
@@ -169,6 +180,8 @@ stages:
       dependsOn: [build_core]
 
   - template: templates/stages/test-ui.yaml
+
+  - template: templates/stages/test-e2e.yaml
 
   - template: templates/stages/test-container.yaml
     parameters:
