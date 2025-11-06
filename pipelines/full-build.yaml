@@ -79,6 +79,10 @@ resources:
     type: github
     endpoint: github-repo-sa
     name: CybercentreCanada/assemblyline-helm-chart
+  - repository: RustRepo
+    type: github
+    endpoint: github-repo-sa
+    name: CybercentreCanada/assemblyline-rust
 
 
 stages:
