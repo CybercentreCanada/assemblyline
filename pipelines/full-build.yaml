@@ -44,12 +44,6 @@ resources:
         MINIO_SECRET_KEY: Ch@ngeTh!sPa33w0rd
       ports:
         - 9000:9000
-    # - container: azureite
-    #   image: mcr.microsoft.com/azure-storage/azurite
-    #   ports:
-    #     - 10000:10000
-    #     - 10001:10001
-    #     - 10002:10002
     - container: openldap
       image: docker.io/bitnamilegacy/openldap:2.6
       env:
