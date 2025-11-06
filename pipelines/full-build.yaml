@@ -90,9 +90,6 @@ stages:
   # Build Base
   - template: templates/stages/build-base.yaml
 
-  # Test Rust Core, rust is tested _then_ built unlike the python containers
-  - template: templates/stages/test-rust.yaml
-
   # Build Core
   - template: templates/stages/build-container.yaml
     parameters:
@@ -173,6 +170,9 @@ stages:
       imageName: assemblyline-ui-plugin-lookup-virustotal
       workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/plugins/external_lookup/virustotal
 
+  # The rust server code tests and builds at the same time, both must pass before deployment
+  - template: templates/stages/test-rust.yaml
+  - template: templates/stages/build-rust.yaml
 
   ### TESTING ###
   - template: templates/stages/test-container.yaml
@@ -180,8 +180,6 @@ stages:
       imageName: assemblyline
       component: assemblyline-base
       dependsOn: [build_base]
-
-  - template: templates/stages/build-rust.yaml
 
   - template: templates/stages/test-container.yaml
     parameters:
