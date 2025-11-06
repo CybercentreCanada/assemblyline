@@ -1,0 +1,32 @@
+stages:
+  - stage: build_rust
+    displayName: Build Rust Server
+    dependsOn: test_rust
+    jobs:
+      - job: build_rust
+        displayName: Build Rust Server
+        steps:
+          - checkout: none
+          - download: current
+            artifact: rust_source
+          - task: Docker@2
+            displayName: Login to docker registry
+            inputs:
+              command: login
+              containerRegistry: cccstemp
+          - script: |
+              set -exv  # Echo commands before they are run
+              if [[ "$TAG" == *stable* ]]; then export BUILD_KIND=stable; else export BUILD_KIND=latest; fi
+              export VERSION=${TAG/stable}
+              export VERSION=${VERSION/beta/b}
+              export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_KIND}"
+
+              set +xv
+              export IMAGE=cccstemp.azurecr.io/assemblyline-rust
+              docker build --build-arg version=$VERSION \
+                           --build-arg version_tag=$TAG \
+                           --build-arg tag=$BUILD_KIND \
+                           -t $IMAGE:$TAG -t $IMAGE:$BUILD_KIND -t $IMAGE:$SERIES . | while read line ; do echo "$(date) | $line"; done;
+              docker push $IMAGE -q --all-tags
+            workingDirectory: $(Pipeline.Workspace)/assemblyline-rust
+            displayName: Build Server

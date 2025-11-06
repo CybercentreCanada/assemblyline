@@ -1,0 +1,89 @@
+stages:
+  - stage: test_rust
+    displayName: Test Rust Components
+    jobs:
+      # Check out source and add tag
+      - job: setup
+        displayName: Get Rust Source
+        steps:
+          - checkout: none
+            persistCredentials: true
+          - script: |
+              set -e
+              # Figure out what the build kind is
+              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/"}
+              export VERSION=${BUILD_SOURCEBRANCH#"refs/tags/v"}
+              if [[ "$VERSION" == *stable* ]];
+              then
+                export BRANCH=main;
+              elif [[ "$VERSION" == *dev* ]];
+              then
+                export BRANCH=dev;
+              else
+                exit 1;
+              fi
+
+              echo "Building $VERSION On branch $BRANCH"
+              export VERSION=${VERSION/stable}
+              export VERSION=${VERSION/beta/b}
+
+              cd assemblyline-rust
+              git tag ${TAG}
+              git push origin ${TAG}
+
+            # workingDirectory: $(Pipeline.Workspace)/working
+            displayName: Tag Source
+          - publish: $(System.DefaultWorkingDirectory)/assemblyline-rust
+            artifact: rust_source
+      - job: test_filestore
+        dependsOn: setup
+        displayName: Test Filestore
+        steps:
+          - checkout: none
+          - download: current
+            artifact: rust_source
+          - script: |
+              curl https://sh.rustup.rs -sSf | sh -s -- -y
+              echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"      
+            displayName: Install rust
+          - script: |
+              set -e
+              cd assemblyline-filestore
+              docker compose up -d --wait
+              cargo test
+            workingDirectory: $(Pipeline.Workspace)/assemblyline-rust
+            displayName: Test Filestore
+      - job: test_markings
+        dependsOn: setup
+        displayName: Test Markings
+        steps:
+          - checkout: none
+          - download: current
+            artifact: rust_source
+          - script: |
+              curl https://sh.rustup.rs -sSf | sh -s -- -y
+              echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"      
+            displayName: Install rust
+          - script: |
+              set -e
+              cd assemblyline-markings
+              cargo test
+            workingDirectory: $(Pipeline.Workspace)/assemblyline-rust
+            displayName: Test Markings
+      - job: test_redis_objects
+        dependsOn: setup
+        displayName: Test Redis Objects
+        steps:
+          - checkout: none
+          - download: current
+            artifact: rust_source
+          - script: |
+              curl https://sh.rustup.rs -sSf | sh -s -- -y
+              echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"      
+            displayName: Install rust
+          - script: |
+              set -e
+              cd redis-objects
+              cargo test
+            workingDirectory: $(Pipeline.Workspace)/assemblyline-rust
+            displayName: Test Redis Objects
