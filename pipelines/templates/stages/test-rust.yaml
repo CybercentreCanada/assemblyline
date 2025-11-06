@@ -91,6 +91,24 @@ stages:
           - script: |
               set -e
               cd redis-objects
+              docker compose up -d --wait
               cargo test
             workingDirectory: $(Pipeline.Workspace)/assemblyline-rust
             displayName: Test Redis Objects
+      - job: test_environment_template
+        dependsOn: []
+        displayName: Test Environment Template
+        steps:
+          - checkout: none
+          - download: current
+            artifact: assemblyline-rust
+          - script: |
+              curl https://sh.rustup.rs -sSf | sh -s -- -y
+              echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"      
+            displayName: Install rust
+          - script: |
+              set -e
+              cd environment_template
+              cargo test
+            workingDirectory: $(Pipeline.Workspace)/assemblyline-rust
+            displayName: Test Environment Template

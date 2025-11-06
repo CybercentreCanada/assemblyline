@@ -26,7 +26,9 @@ stages:
               docker build --build-arg version=$VERSION \
                            --build-arg version_tag=$TAG \
                            --build-arg tag=$BUILD_KIND \
-                           -t $IMAGE:$TAG -t $IMAGE:$BUILD_KIND -t $IMAGE:$SERIES . | while read line ; do echo "$(date) | $line"; done;
+                           -t $IMAGE:$TAG \ 
+                           -t $IMAGE:$BUILD_KIND \ 
+                           -t $IMAGE:$SERIES . -f ./assemblyline-server/Dockerfile | while read line ; do echo "$(date) | $line"; done;
               docker push $IMAGE -q --all-tags
             workingDirectory: $(Pipeline.Workspace)/assemblyline-rust
             displayName: Build Server
