@@ -8,6 +8,7 @@ stages:
         displayName: Get Rust Source
         steps:
           - checkout: RustRepo
+            path: assemblyline-rust
             persistCredentials: true
           - script: |
               set -e
