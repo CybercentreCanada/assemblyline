@@ -28,12 +28,14 @@ stages:
               export VERSION=${VERSION/stable}
               export VERSION=${VERSION/beta/b}
 
+              git fetch origin ${BRANCH}
+              git checkout ${BRANCH}
               git tag ${TAG}
               git push origin ${TAG}
 
-            workingDirectory: $(System.DefaultWorkingDirectory)/assemblyline-rust
+            workingDirectory: $(Pipeline.Workspace)/assemblyline-rust
             displayName: Tag Source
-          - publish: $(System.DefaultWorkingDirectory)/assemblyline-rust
+          - publish: $(Pipeline.Workspace)/assemblyline-rust
             artifact: rust_source
       - job: test_filestore
         dependsOn: rust_source_setup
