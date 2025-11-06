@@ -1,7 +1,7 @@
 stages:
   - stage: build_rust
     displayName: Build Rust Server
-    dependsOn: test_rust
+    dependsOn: rust_source_setup
     jobs:
       - job: build_rust
         displayName: Build Rust Server

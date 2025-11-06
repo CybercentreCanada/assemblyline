@@ -215,7 +215,7 @@ stages:
   ### PUBLISHING ###
   - stage: deploy
     displayName: Deploy
-    dependsOn: [test_assemblyline, test_core, test_ui, build_frontend, test_service_server, test_v4_service_base, build_rust]
+    dependsOn: [test_assemblyline, test_core, test_ui, build_frontend, test_service_server, test_v4_service_base, test_rust, build_rust]
     jobs:
     - job: deploy_python
       displayName: Deploy Python Packages

@@ -1,7 +1,46 @@
 stages:
+  - stage: rust_source_setup
+    displayName: Get Rust Source
+    dependsOn: []
+    jobs:
+      # Check out source and add tag
+      - job: rust_source_setup
+        displayName: Get Rust Source
+        steps:
+          - checkout: RustRepo
+            path: assemblyline-rust
+            persistCredentials: true
+          - script: |
+              set -e
+              # Figure out what the build kind is
+              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/"}
+              export VERSION=${BUILD_SOURCEBRANCH#"refs/tags/v"}
+              if [[ "$VERSION" == *stable* ]];
+              then
+                export BRANCH=main;
+              elif [[ "$VERSION" == *dev* ]];
+              then
+                export BRANCH=dev;
+              else
+                exit 1;
+              fi
+
+              echo "Building $VERSION On branch $BRANCH"
+              export VERSION=${VERSION/stable}
+              export VERSION=${VERSION/beta/b}
+
+              git fetch origin ${BRANCH}
+              git checkout ${BRANCH}
+              git tag ${TAG}
+              git push origin ${TAG}
+
+            workingDirectory: $(Pipeline.Workspace)/assemblyline-rust
+            displayName: Tag Source
+          - publish: $(Pipeline.Workspace)/assemblyline-rust
+            artifact: rust_source
   - stage: test_rust
     displayName: Test Rust Components
-    dependsOn: []
+    dependsOn: rust_source_setup
     jobs:
       # Check out source and add tag
       - job: rust_source_setup
