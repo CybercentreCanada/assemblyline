@@ -1,0 +1,114 @@
+stages:
+  - stage: rust_source_setup
+    displayName: Get Rust Source
+    dependsOn: []
+    jobs:
+      # Check out source and add tag
+      - job: rust_source_setup
+        displayName: Get Rust Source
+        steps:
+          - checkout: RustRepo
+            path: assemblyline-rust
+            persistCredentials: true
+          - script: |
+              set -e
+              # Figure out what the build kind is
+              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/"}
+              export VERSION=${BUILD_SOURCEBRANCH#"refs/tags/v"}
+              if [[ "$VERSION" == *stable* ]];
+              then
+                export BRANCH=main;
+              elif [[ "$VERSION" == *dev* ]];
+              then
+                export BRANCH=dev;
+              else
+                exit 1;
+              fi
+
+              echo "Building $VERSION On branch $BRANCH"
+              export VERSION=${VERSION/stable}
+              export VERSION=${VERSION/beta/b}
+
+              git fetch origin ${BRANCH}
+              git checkout ${BRANCH}
+              git tag ${TAG}
+              git push origin ${TAG}
+
+            workingDirectory: $(Pipeline.Workspace)/assemblyline-rust
+            displayName: Tag Source
+          - publish: $(Pipeline.Workspace)/assemblyline-rust
+            artifact: assemblyline-rust
+  - stage: test_rust
+    displayName: Test Rust Components
+    dependsOn: rust_source_setup
+    jobs:
+      - job: test_filestore
+        dependsOn: []
+        displayName: Test Filestore
+        steps:
+          - checkout: none
+          - download: current
+            artifact: assemblyline-rust
+          - script: |
+              curl https://sh.rustup.rs -sSf | sh -s -- -y
+              echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"      
+            displayName: Install rust
+          - script: |
+              set -e
+              cd assemblyline-filestore
+              docker compose up -d --wait
+              cargo test
+            workingDirectory: $(Pipeline.Workspace)/assemblyline-rust
+            displayName: Test Filestore
+      - job: test_markings
+        dependsOn: []
+        displayName: Test Markings
+        steps:
+          - checkout: none
+          - download: current
+            artifact: assemblyline-rust
+          - script: |
+              curl https://sh.rustup.rs -sSf | sh -s -- -y
+              echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"      
+            displayName: Install rust
+          - script: |
+              set -e
+              cd assemblyline-markings
+              cargo test
+            workingDirectory: $(Pipeline.Workspace)/assemblyline-rust
+            displayName: Test Markings
+      - job: test_redis_objects
+        dependsOn: []
+        displayName: Test Redis Objects
+        steps:
+          - checkout: none
+          - download: current
+            artifact: assemblyline-rust
+          - script: |
+              curl https://sh.rustup.rs -sSf | sh -s -- -y
+              echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"      
+            displayName: Install rust
+          - script: |
+              set -e
+              cd redis-objects
+              docker compose up -d --wait
+              cargo test
+            workingDirectory: $(Pipeline.Workspace)/assemblyline-rust
+            displayName: Test Redis Objects
+      - job: test_environment_template
+        dependsOn: []
+        displayName: Test Environment Template
+        steps:
+          - checkout: none
+          - download: current
+            artifact: assemblyline-rust
+          - script: |
+              curl https://sh.rustup.rs -sSf | sh -s -- -y
+              echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"      
+            displayName: Install rust
+          - script: |
+              set -e
+              cd environment_template
+              cargo test
+            workingDirectory: $(Pipeline.Workspace)/assemblyline-rust
+            displayName: Test Environment Template

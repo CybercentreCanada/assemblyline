@@ -73,6 +73,10 @@ resources:
     type: github
     endpoint: github-repo-sa
     name: CybercentreCanada/assemblyline-helm-chart
+  - repository: RustRepo
+    type: github
+    endpoint: github-repo-sa
+    name: CybercentreCanada/assemblyline-rust
 
 
 stages:
@@ -166,6 +170,9 @@ stages:
       imageName: assemblyline-ui-plugin-lookup-virustotal
       workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/plugins/external_lookup/virustotal
 
+  # The rust server code tests and builds at the same time, both must pass before deployment
+  - template: templates/stages/test-rust.yaml
+  - template: templates/stages/build-rust.yaml
 
   ### TESTING ###
   - template: templates/stages/test-container.yaml
@@ -200,7 +207,7 @@ stages:
   ### PUBLISHING ###
   - stage: deploy
     displayName: Deploy
-    dependsOn: [test_assemblyline, test_core, test_ui, build_frontend, test_service_server, test_v4_service_base]
+    dependsOn: [test_assemblyline, test_core, test_ui, build_frontend, test_service_server, test_v4_service_base, test_rust, build_rust]
     jobs:
     - job: deploy_python
       displayName: Deploy Python Packages
@@ -238,6 +245,8 @@ stages:
             DIRECTORY: assemblyline-base
           Core:
             CONTAINER_NAME: assemblyline-core
+          RustCore:
+            CONTAINER_NAME: assemblyline-rust
           UI:
             CONTAINER_NAME: assemblyline-ui
           UI-plugin-lookup-assemblyline:
