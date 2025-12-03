@@ -99,7 +99,7 @@ stages:
             condition: always() # Always upload, even if tests fail
             inputs:
               targetPath: '$(Pipeline.Workspace)/working/assemblyline-ui-frontend/playwright-report'
-              artifact: 'playwright-report'
+              artifact: 'playwright-report-$(System.JobAttempt)'
 
           # --- Log collection if failure ---
           - script: docker logs ui
