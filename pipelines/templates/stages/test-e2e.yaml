@@ -2,6 +2,11 @@ stages:
   - stage: test_e2e
     displayName: Playwright E2E Tests
     dependsOn: [build_ui, build_frontend]
+
+    variables:
+      E2E_NETWORK: "host"
+      E2E_DOMAIN: "localhost"
+
     jobs:
       - job: test_e2e
         timeoutInMinutes: 20
@@ -27,44 +32,53 @@ stages:
 
               echo "--- Starting service containers ---"
 
-              docker run -d --name ui --network host \
+              docker run -d --name ui --network $(E2E_NETWORK) \
                 -v $(Pipeline.Workspace)/working/pipelines/templates/stages/e2e-config.yaml:/etc/assemblyline/config.yml \
                 -v $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml \
                 --restart on-failure \
                 cccstemp.azurecr.io/assemblyline-ui:$TAG
 
-              docker run -d --name socketsrv --network host \
+              docker run -d --name socketsrv --network $(E2E_NETWORK) \
                 -v $(Pipeline.Workspace)/working/pipelines/templates/stages/e2e-config.yaml:/etc/assemblyline/config.yml \
                 -v $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml \
                 --restart on-failure \
                 cccstemp.azurecr.io/assemblyline-socketio:$TAG
 
-              docker run -d --name frontend --network host \
+              docker run -d --name frontend --network $(E2E_NETWORK) \
                 --restart on-failure \
-                -e "EXTERNAL_IP=127.0.0.1" \
+                -e "EXTERNAL_IP=$(E2E_DOMAIN)" \
                 cccstemp.azurecr.io/assemblyline-ui-frontend:$TAG
 
-              docker run -d --name nginx --network host \
+              docker run -d --name nginx --network $(E2E_NETWORK) \
                 --restart on-failure \
-                -e "FRONTEND_HOST=127.0.0.1" \
-                -e "UI_HOST=127.0.0.1" \
-                -e "SOCKET_HOST=127.0.0.1" \
+                -e "FRONTEND_HOST=$(E2E_DOMAIN)" \
+                -e "UI_HOST=$(E2E_DOMAIN)" \
+                -e "SOCKET_HOST=$(E2E_DOMAIN)" \
                 -e "TEMPLATE=minimal" \
-                -e "FQDN=localhost" \
+                -e "FQDN=$(E2E_DOMAIN)" \
                 -e "ACCESS_LOG=/dev/stdout" \
                 -e "ERROR_LEVEL=info" \
                 cccs/nginx-ssl-frontend
 
-              echo "--- Waiting for services ---"
-              wget http://localhost:5000/healthz/ready --retry-on-http-error=502 --retry-on-http-error=503 --waitretry=10 --retry-connrefused
-              wget http://localhost:5002/healthz/ready --retry-on-http-error=502 --retry-on-http-error=503 --waitretry=10 --retry-connrefused
-              wget https://localhost --no-check-certificate --retry-on-http-error=502 --waitretry=10 --retry-connrefused
+              echo "--- Waiting for backend services ---"
+              wget http://$(E2E_DOMAIN):5000/healthz/ready --retry-on-http-error=502 --retry-on-http-error=503 --waitretry=10 --retry-connrefused
+              wget http://$(E2E_DOMAIN):5002/healthz/ready --retry-on-http-error=502 --retry-on-http-error=503 --waitretry=10 --retry-connrefused
+
+              echo "--- Stabilizing SSL / nginx startup ---"
+              sleep 5
+
+              echo "--- Validating nginx availability ---"
+              wget https://$(E2E_DOMAIN) --no-check-certificate --retry-on-http-error=502 --waitretry=10 --retry-connrefused
+
+              echo "--- Validating /whoami endpoint readiness ---"
+              wget https://$(E2E_DOMAIN)/api/v4/user/whoami/ --no-check-certificate --retry-on-http-error=502 --waitretry=10 --retry-connrefused || true
+
             displayName: Start Services
 
           # --- Create default test data (users etc.) ---
           - script: |
               echo "--- Creating test data (default users) ---"
-              docker run --rm --network host \
+              docker run --rm --network $(E2E_NETWORK) \
                 -v $(Pipeline.Workspace)/working/pipelines/:/etc/assemblyline/ \
                 -v $(Pipeline.Workspace)/working/:/opt/alv4/ \
                 -w /opt/alv4/assemblyline-base/assemblyline/odm/random_data/ \
@@ -78,8 +92,8 @@ stages:
               docker run --rm \
                 -v $(Pipeline.Workspace)/working/assemblyline-ui-frontend:/app \
                 -w /app \
-                --network host \
-                -e EXTERNAL_IP=127.0.0.1 \
+                --network $(E2E_NETWORK) \
+                -e EXTERNAL_IP=$(E2E_DOMAIN) \
                 -e TEST_SHORT_TIMEOUT=3000 \
                 -e TEST_MEDIUM_TIMEOUT=8000 \
                 -e TEST_LONG_TIMEOUT=60000 \
