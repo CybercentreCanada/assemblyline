@@ -5,7 +5,7 @@ stages:
 
     variables:
       E2E_NETWORK: "host"
-      E2E_DOMAIN: "localhost"
+      E2E_DOMAIN: 127.0.0.1
 
     jobs:
       - job: test_e2e
