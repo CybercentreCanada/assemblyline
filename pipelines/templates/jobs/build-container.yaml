@@ -51,12 +51,13 @@ jobs:
 
           export BASE=cccstemp.azurecr.io/${{ parameters.baseImage }}
           export IMAGE=cccstemp.azurecr.io/${{ parameters.imageName }}
-
+          docker buildx create --name container-builder --driver docker-container --use
           docker build --build-arg base=$BASE \
                         --build-arg version=$VERSION \
                         --build-arg branch=$BUILD_KIND \
                         --sbom=true \
                         --attest type=provenance \
+                        --builder=container-builder
                         -t $IMAGE:$TAG -t $IMAGE:$BUILD_KIND -t $IMAGE:$SERIES \
                         -f ${{ parameters.dockerFile }} ${{ parameters.buildContext }}
           docker push $IMAGE -q --all-tags
