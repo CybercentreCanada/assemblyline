@@ -320,7 +320,7 @@ stages:
                 --push \
                 -<<EOF
               FROM $BUILT_AS
-              EOF
+            EOF
             done
 
             IMAGE=uchimera.azurecr.io/cccs/
