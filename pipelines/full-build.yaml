@@ -54,7 +54,7 @@ resources:
         LDAP_PASSWORDS: ldap_password
         LDAP_USER_OU: people
       ports:
-        - 389:389        
+        - 389:389
   repositories:
   - repository: BuildRepo
     type: github
@@ -304,6 +304,7 @@ stages:
             export VERSION=${TAG/stable}
             export VERSION=${VERSION/beta/b}
             export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
+            docker buildx create --name container-builder --driver docker-container --use
 
             export BUILT_AS=cccstemp.azurecr.io/${CONTAINER_NAME}:$TAG
             docker pull $BUILT_AS
@@ -311,23 +312,29 @@ stages:
             # Publish to public container registries
             for IMAGE in "cccs/" "docker.pkg.github.com/cybercentrecanada/assemblyline/"
             do
-              docker tag $BUILT_AS ${IMAGE}${CONTAINER_NAME}:$TAG
-              docker tag $BUILT_AS ${IMAGE}${CONTAINER_NAME}:$BUILD_TYPE
-              docker tag $BUILT_AS ${IMAGE}${CONTAINER_NAME}:$SERIES
-              docker push ${IMAGE}${CONTAINER_NAME} --all-tags
+              docker build --sbom=true --attest type=provenance \
+                --builder=container-builder \
+                -t ${IMAGE}${CONTAINER_NAME}:$TAG \
+                -t ${IMAGE}${CONTAINER_NAME}:$BUILD_TYPE \
+                -t ${IMAGE}${CONTAINER_NAME}:$SERIES \
+                --push \
+                -<<EOF
+              FROM $BUILT_AS
+              EOF
             done
 
+            IMAGE=uchimera.azurecr.io/cccs/
             # Publish to private container registry (append labelling)
-            docker build -t $BUILT_AS -<<EOF
+            docker build --sbom=true --attest type=provenance \
+            --builder=container-builder \
+            -t ${IMAGE}${CONTAINER_NAME}:$TAG \
+            -t ${IMAGE}${CONTAINER_NAME}:$BUILD_TYPE \
+            -t ${IMAGE}${CONTAINER_NAME}:$SERIES \
+            --push \
+            -<<EOF
             FROM $BUILT_AS
             LABEL classification=UNCLASSIFIED
             EOF
-
-            IMAGE=uchimera.azurecr.io/cccs/
-            docker tag $BUILT_AS ${IMAGE}${CONTAINER_NAME}:$TAG
-            docker tag $BUILT_AS ${IMAGE}${CONTAINER_NAME}:$BUILD_TYPE
-            docker tag $BUILT_AS ${IMAGE}${CONTAINER_NAME}:$SERIES
-            docker push ${IMAGE}${CONTAINER_NAME} --all-tags
 
           displayName: Deploy base Docker Hub
           retryCountOnTaskFailure: 3
