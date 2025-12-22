@@ -57,7 +57,7 @@ jobs:
                         --build-arg branch=$BUILD_KIND \
                         --sbom=true \
                         --attest type=provenance \
-                        --builder=container-builder
+                        --builder=container-builder \
                         -t $IMAGE:$TAG -t $IMAGE:$BUILD_KIND -t $IMAGE:$SERIES \
                         -f ${{ parameters.dockerFile }} ${{ parameters.buildContext }}
           docker push $IMAGE -q --all-tags
