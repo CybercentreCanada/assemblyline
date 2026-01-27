@@ -354,9 +354,9 @@ stages:
             fi
             
             chmod -R a+rw .
-            sed -i 's/release: .*/release: '"$TAG"'/g' assemblyline/values.yaml
-            sed -i 's/version: .*/version: '"$TAG"'/g' assemblyline/Chart.yaml
-            sed -i 's/appVersion: .*/appVersion: '"$TAG"'/g' assemblyline/Chart.yaml
+            sed -i 's/release: .*/release: '"$TAG"'/g' charts/assemblyline/values.yaml
+            sed -i 's/version: .*/version: '"$TAG"'/g' charts/assemblyline/Chart.yaml
+            sed -i 's/appVersion: .*/appVersion: '"$TAG"'/g' charts/assemblyline/Chart.yaml
 
             git add .
             git config --global user.email "assemblyline@cyber.gc.ca"
