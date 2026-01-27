@@ -349,7 +349,7 @@ stages:
             set -exv  # Echo commands before they are run
             
             git checkout template
-            if git show-ref --quiet refs/heads/dev; then
+            if git show-ref --quiet refs/heads/dev && [[ "$TAG" == *dev* ]]; then
               git checkout dev
             fi
             
