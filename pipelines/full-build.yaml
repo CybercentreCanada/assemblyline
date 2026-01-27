@@ -347,18 +347,24 @@ stages:
           persistCredentials: true
         - script: |
             set -exv  # Echo commands before they are run
-
-            if [[ "$TAG" == *stable* ]]
-            then
-              git checkout master
-              chmod -R a+rw .
-              sed -i 's/release: .*/release: '"$TAG"'/g' assemblyline/values.yaml
-              git add .
-              git config --global user.email "assemblyline@cyber.gc.ca"
-              git config --global user.name "Azure Pipeline"
-              git commit -m "Pipeline: Release $TAG"
-              git push
+            
+            git checkout template
+            if git show-ref --quiet refs/heads/dev; then
+              git checkout dev
             fi
+            
+            chmod -R a+rw .
+            sed -i 's/release: .*/release: '"$TAG"'/g' assemblyline/values.yaml
+            sed -i 's/version: .*/version: '"$TAG"'/g' assemblyline/Chart.yaml
+            sed -i 's/appVersion: .*/appVersion: '"$TAG"'/g' assemblyline/Chart.yaml
+
+            git add .
+            git config --global user.email "assemblyline@cyber.gc.ca"
+            git config --global user.name "Azure Pipeline"
+            git commit -m "Pipeline: Release $TAG"
+
+            git branch main
+            git push --force
 
           workingDirectory: $(Pipeline.Workspace)/assemblyline-helm-chart
           displayName: "Patch the default release version to the latest stable"
