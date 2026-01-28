@@ -349,15 +349,22 @@ stages:
             set -exv  # Echo commands before they are run
 
             git fetch --all
-            git checkout template
-            if git show-ref --quiet refs/heads/dev && [[ "$TAG" == *dev* ]]; then
+            git checkout main              
+            if git show-ref --quiet refs/remotes/origin/dev && [[ "$TAG" == *dev* ]]; then
               git checkout dev
+            fi
+
+            export CHART_VERSION=${TAG#"v4."}
+            export CHART_VERSION=${CHART_VERSION/stable}
+            export CHART_VERSION=${CHART_VERSION/dev}
+            if [[ "$TAG" == *dev* ]]; then
+              export CHART_VERSION="${CHART_VERSION}-dev"
             fi
             
             chmod -R a+rw .
             sed -i 's/release: .*/release: '"$TAG"'/g' charts/assemblyline/values.yaml
-            sed -i 's/version: .*/version: '"$TAG"'/g' charts/assemblyline/Chart.yaml
-            sed -i 's/appVersion: .*/appVersion: '"$TAG"'/g' charts/assemblyline/Chart.yaml
+            sed -i 's/version: .*/version: '"$CHART_VERSION"'/g' charts/assemblyline/Chart.yaml
+            sed -i 's/appVersion: .*/appVersion: "'"$TAG"'"/g' charts/assemblyline/Chart.yaml
 
             git add .
             git config --global user.email "assemblyline@cyber.gc.ca"
