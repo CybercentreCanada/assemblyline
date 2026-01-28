@@ -354,7 +354,7 @@ stages:
               git checkout dev
             fi
 
-            export CHART_VERSION=${TAG#"v4."}
+            export CHART_VERSION=${TAG#"4."}
             export CHART_VERSION=${CHART_VERSION/stable}
             export CHART_VERSION=${CHART_VERSION/dev}
             if [[ "$TAG" == *dev* ]]; then
