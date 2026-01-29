@@ -348,17 +348,30 @@ stages:
         - script: |
             set -exv  # Echo commands before they are run
 
-            if [[ "$TAG" == *stable* ]]
-            then
-              git checkout master
-              chmod -R a+rw .
-              sed -i 's/release: .*/release: '"$TAG"'/g' assemblyline/values.yaml
-              git add .
-              git config --global user.email "assemblyline@cyber.gc.ca"
-              git config --global user.name "Azure Pipeline"
-              git commit -m "Pipeline: Release $TAG"
-              git push
+            git fetch --all
+            git checkout main              
+            if git show-ref --quiet refs/remotes/origin/dev && [[ "$TAG" == *dev* ]]; then
+              git checkout dev
             fi
+
+            export CHART_VERSION=${TAG#"4."}
+            export CHART_VERSION=${CHART_VERSION/stable}
+            export CHART_VERSION=${CHART_VERSION/dev}
+            if [[ "$TAG" == *dev* ]]; then
+              export CHART_VERSION="${CHART_VERSION}-dev"
+            fi
+            
+            chmod -R a+rw .
+            sed -i 's/release: .*/release: '"$TAG"'/g' charts/assemblyline/values.yaml
+            sed -i 's/version: .*/version: '"$CHART_VERSION"'/g' charts/assemblyline/Chart.yaml
+            sed -i 's/appVersion: .*/appVersion: "'"$TAG"'"/g' charts/assemblyline/Chart.yaml
+
+            git add .
+            git config --global user.email "assemblyline@cyber.gc.ca"
+            git config --global user.name "Azure Pipeline"
+            git commit -m "Pipeline: Release $TAG"
+
+            git push --force origin HEAD:release
 
           workingDirectory: $(Pipeline.Workspace)/assemblyline-helm-chart
           displayName: "Patch the default release version to the latest stable"
