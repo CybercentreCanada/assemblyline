@@ -49,15 +49,19 @@ stages:
           - checkout: none
           - download: current
             artifact: assemblyline-rust
-          - script: |
-              curl https://sh.rustup.rs -sSf | sh -s -- -y
-              echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"      
-            displayName: Install rust
+          - task: Docker@2
+            displayName: Login to docker registry
+            inputs:
+              command: login
+              containerRegistry: cccstemp
           - script: |
               set -e
-              cd assemblyline-filestore
-              docker compose up -d --wait
-              cargo test
+              docker pull cccstemp.azurecr.io/assemblyline-rust-builder:latest
+              (cd assemblyline-filestore; docker compose up -d --wait)
+              docker run -v ${PWD}:/usr/src/ \
+                        --network=host \
+                        cccstemp.azurecr.io/assemblyline-rust-builder:latest \
+                        bash -c 'cd assemblyline-filestore; cargo test --target-dir /out'
             workingDirectory: $(Pipeline.Workspace)/assemblyline-rust
             displayName: Test Filestore
       - job: test_markings
@@ -67,34 +71,42 @@ stages:
           - checkout: none
           - download: current
             artifact: assemblyline-rust
-          - script: |
-              curl https://sh.rustup.rs -sSf | sh -s -- -y
-              echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"      
-            displayName: Install rust
+          - task: Docker@2
+            displayName: Login to docker registry
+            inputs:
+              command: login
+              containerRegistry: cccstemp
           - script: |
               set -e
-              cd assemblyline-markings
-              cargo test
+              docker pull cccstemp.azurecr.io/assemblyline-rust-builder:latest
+              docker run -v ${PWD}:/usr/src/ \
+                        --network=host \
+                        cccstemp.azurecr.io/assemblyline-rust-builder:latest \
+                        bash -c 'cd assemblyline-markings; cargo test --target-dir /out'
             workingDirectory: $(Pipeline.Workspace)/assemblyline-rust
             displayName: Test Markings
-      - job: test_redis_objects
+      - job: test_server
         dependsOn: []
-        displayName: Test Redis Objects
+        displayName: Test Server
         steps:
           - checkout: none
           - download: current
             artifact: assemblyline-rust
-          - script: |
-              curl https://sh.rustup.rs -sSf | sh -s -- -y
-              echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"      
-            displayName: Install rust
+          - task: Docker@2
+            displayName: Login to docker registry
+            inputs:
+              command: login
+              containerRegistry: cccstemp
           - script: |
               set -e
-              cd redis-objects
-              docker compose up -d --wait
-              cargo test
+              docker pull cccstemp.azurecr.io/assemblyline-rust-builder:latest
+              (cd assemblyline-server; docker compose up -d --wait)
+              docker run -v ${PWD}:/usr/src/ \
+                        --network=host \
+                        cccstemp.azurecr.io/assemblyline-rust-builder:latest \
+                        bash -c 'cd assemblyline-server; cargo test --target-dir /out'
             workingDirectory: $(Pipeline.Workspace)/assemblyline-rust
-            displayName: Test Redis Objects
+            displayName: Test Server
       - job: test_environment_template
         dependsOn: []
         displayName: Test Environment Template
@@ -102,13 +114,40 @@ stages:
           - checkout: none
           - download: current
             artifact: assemblyline-rust
-          - script: |
-              curl https://sh.rustup.rs -sSf | sh -s -- -y
-              echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"      
-            displayName: Install rust
+          - task: Docker@2
+            displayName: Login to docker registry
+            inputs:
+              command: login
+              containerRegistry: cccstemp
           - script: |
               set -e
-              cd environment_template
-              cargo test
+              docker pull cccstemp.azurecr.io/assemblyline-rust-builder:latest
+              docker run -v ${PWD}:/usr/src/ \
+                        --network=host \
+                        cccstemp.azurecr.io/assemblyline-rust-builder:latest \
+                        bash -c 'cd environment_template; cargo test --target-dir /out'
             workingDirectory: $(Pipeline.Workspace)/assemblyline-rust
             displayName: Test Environment Template
+      - job: test_redis_objects
+        dependsOn: []
+        displayName: Test Redis Objects
+        steps:
+          - checkout: none
+          - download: current
+            artifact: assemblyline-rust
+          - task: Docker@2
+            displayName: Login to docker registry
+            inputs:
+              command: login
+              containerRegistry: cccstemp
+          - script: |
+              set -e
+              docker pull cccstemp.azurecr.io/assemblyline-rust-builder:latest
+              (cd redis-objects; docker compose up -d --wait)
+              docker run -v ${PWD}:/usr/src/ \
+                        --network=host \
+                        cccstemp.azurecr.io/assemblyline-rust-builder:latest \
+                        bash -c 'cd redis-objects; cargo test --target-dir /out'
+            workingDirectory: $(Pipeline.Workspace)/assemblyline-rust
+            displayName: Test Redis Objects
+
