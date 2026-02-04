@@ -1,3 +1,8 @@
+parameters:
+  - name: test_only
+    type: boolean
+    default: false
+
 stages:
   - stage: build_python
     displayName: Build Python Packages
@@ -36,8 +41,11 @@ stages:
               git config --global http.extraheader "`git config --get http.https://github.com/CybercentreCanada/assemblyline.extraheader`"
               git submodule foreach git checkout -B $BRANCH --track origin/$BRANCH
               git submodule foreach git pull
+
+              if [ "${{ parameters.test_only }}" = false ]; then
               git submodule foreach git tag ${TAG}
               git submodule foreach git push origin ${TAG}
+              fi
               sudo env "PATH=$PATH" "PIP_USE_PEP517=true" python -m pip install --no-cache-dir -U wheel cython pip build
 
               # Build base
