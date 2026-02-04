@@ -9,7 +9,10 @@ pool:
   vmImage: "ubuntu-latest"
 
 variables:
-  TAG: ${{ replace(variables['Build.SourceBranch'], 'refs/tags/v', '') }}
+  TAG: 4.7.0.dev0
+  VERSION:  4.7.0.dev0
+  BUILD_KIND: latest
+  SERIES: 4.7.latest
 
 resources:
   containers:
