@@ -21,8 +21,6 @@ stages:
               set -ex  # Echo commands before they are run
 
               # Figure out what the build kind is
-              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/"}
-              export VERSION=${BUILD_SOURCEBRANCH#"refs/tags/v"}
               if [[ "$VERSION" == *stable* ]];
               then
                 export BRANCH=master;
