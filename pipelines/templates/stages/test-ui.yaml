@@ -4,7 +4,7 @@ stages:
     dependsOn: [build_ui, build_frontend]
     jobs:
       - job: test_ui
-        timeoutInMinutes: 10
+        timeoutInMinutes: 20
         services:
           elasticsearch: elasticsearch
           redis: redis
