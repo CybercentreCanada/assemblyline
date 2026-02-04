@@ -39,7 +39,7 @@ stages:
                           -w /test \
                           --network host \
                           cccstemp.azurecr.io/assemblyline-socketio:${TAG} \
-                          /bin/bash -c "pip install -r requirements.txt; CI=1 pytest -rsx --durations=10"
+                          /bin/bash -c "pip install -r requirements.txt; CI=1 pytest -rsx -vv --durations=10"
             workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui
             displayName: Test UI
           - script: docker logs ui
