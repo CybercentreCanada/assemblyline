@@ -9,10 +9,10 @@ pool:
   vmImage: "ubuntu-latest"
 
 variables:
-  TAG: 4.7.0.stable0
-  VERSION:  4.7.0.stable0
-  BUILD_KIND: stable
-  SERIES: 4.7.stable
+  TAG: 4.7.0.dev0
+  VERSION:  4.7.0.dev0
+  BUILD_KIND: latest
+  SERIES: 4.7.latest
 
 resources:
   containers:
