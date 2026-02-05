@@ -37,7 +37,7 @@ stages:
 
               # make sure we are on the right branches for all other repos
               git config --global http.extraheader "`git config --get http.https://github.com/CybercentreCanada/assemblyline.extraheader`"
-              git submodule foreach git fetch origin $BRANCH
+              git submodule foreach git fetch origin
               git submodule foreach git checkout -B $BRANCH --track origin/$BRANCH
               git submodule foreach git pull
 
