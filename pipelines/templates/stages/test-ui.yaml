@@ -24,12 +24,11 @@ stages:
               set -e
 
               docker run -d --name ui --network host -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml -v $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml --restart on-failure cccstemp.azurecr.io/assemblyline-ui:$TAG &
-              docker run -d --name socketsrv --network host -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml -v $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml --restart on-failure cccstemp.azurecr.io/assemblyline-socketio:$TAG &
               docker run -d --name nginx --network host --restart on-failure -e "FRONTEND_HOST=127.0.0.1" -e "UI_HOST=127.0.0.1" -e "SOCKET_HOST=127.0.0.1" -e "TEMPLATE=minimal" -e "FQDN=localhost" -e "ACCESS_LOG=/dev/stdout" -e "ERROR_LEVEL=info" cccs/nginx-ssl-frontend &
               wait
 
-              wget http://localhost:5000/healthz/ready --timeout=2 --retry-on-http-error=502 --retry-on-http-error=503 --waitretry=10 --retry-connrefused
-              wget http://localhost:5002/healthz/ready --timeout=2 --retry-on-http-error=502 --retry-on-http-error=503 --waitretry=10 --retry-connrefused
+              wget http://localhost:5000/healthz/ready --timeout=2 --retry-on-http-error=502 --retry-on-http-error=503 --waitretry=10 --retry-connrefused --ignore=test/test_socketio.py
+
 
               docker run -v `pwd`/test:/test \
                           -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml \
@@ -40,6 +39,24 @@ stages:
                           /bin/bash -c "pip install -r requirements.txt; CI=1 pytest -rsx -vv --durations=10"
             workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui
             displayName: Test UI
+          - script: |
+              set -e
+
+              docker run -d --name socketsrv --network host -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml -v $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml --restart on-failure cccstemp.azurecr.io/assemblyline-socketio:$TAG &
+              docker run -d --name nginx --network host --restart on-failure -e "FRONTEND_HOST=127.0.0.1" -e "UI_HOST=127.0.0.1" -e "SOCKET_HOST=127.0.0.1" -e "TEMPLATE=minimal" -e "FQDN=localhost" -e "ACCESS_LOG=/dev/stdout" -e "ERROR_LEVEL=info" cccs/nginx-ssl-frontend &
+              wait
+
+              wget http://localhost:5002/healthz/ready --timeout=2 --retry-on-http-error=502 --retry-on-http-error=503 --waitretry=10 --retry-connrefused
+
+              docker run -v `pwd`/test:/test \
+                          -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml \
+                          -v $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml \
+                          -w /test \
+                          --network host \
+                          cccstemp.azurecr.io/assemblyline-socketio:${TAG} \
+                          /bin/bash -c "pip install -r requirements.txt; CI=1 pytest -rsx -vv --durations=10" test/test_socketio.py
+            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui
+            displayName: Test Socket-IO            
           - script: docker logs ui
             condition: failed()
             displayName: UI Logs
