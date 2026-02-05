@@ -9,10 +9,10 @@ pool:
   vmImage: "ubuntu-latest"
 
 variables:
-  TAG: 4.7.0.dev0
-  VERSION:  4.7.0.dev0
-  BUILD_KIND: latest
-  SERIES: 4.7.latest
+  TAG: 4.7.0.stable0
+  VERSION:  4.7.0.stable0
+  BUILD_KIND: stable
+  SERIES: 4.7.stable
 
 resources:
   containers:
@@ -63,18 +63,6 @@ resources:
     endpoint: github-repo-sa
     name: CybercentreCanada/assemblyline
     ref: '$(Build.SourceBranch)'
-  - repository: DocsRepo
-    type: github
-    endpoint: github-repo-sa
-    name: CybercentreCanada/assemblyline4_docs
-  - repository: DockerRepo
-    type: github
-    endpoint: github-repo-sa
-    name: CybercentreCanada/assemblyline-docker-compose
-  - repository: HelmRepo
-    type: github
-    endpoint: github-repo-sa
-    name: CybercentreCanada/assemblyline-helm-chart
   - repository: RustRepo
     type: github
     endpoint: github-repo-sa
