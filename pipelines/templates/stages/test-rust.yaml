@@ -39,6 +39,9 @@ stages:
               if [ "${{ parameters.test_only }}" = false ]; then
               git tag ${TAG}
               git push origin ${TAG}
+              else:
+              echo "Test only mode, not tagging source"
+              exit 0
               fi
 
             workingDirectory: $(Pipeline.Workspace)/assemblyline-rust
