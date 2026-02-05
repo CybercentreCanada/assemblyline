@@ -1,3 +1,8 @@
+parameters:
+  - name: test_only
+    type: boolean
+    default: false
+
 stages:
   - stage: rust_source_setup
     displayName: Get Rust Source
@@ -31,8 +36,10 @@ stages:
 
               git fetch origin ${BRANCH}
               git checkout ${BRANCH}
+              if [ "${{ parameters.test_only }}" = false ]; then
               git tag ${TAG}
               git push origin ${TAG}
+              fi
 
             workingDirectory: $(Pipeline.Workspace)/assemblyline-rust
             displayName: Tag Source

@@ -156,6 +156,8 @@ stages:
 
   # The rust server code tests and builds at the same time, both must pass before deployment
   - template: templates/stages/test-rust.yaml
+    parameters:
+      test_only: true
   - template: templates/stages/build-rust.yaml
 
   ### TESTING ###
