@@ -90,14 +90,6 @@ stages:
       dependsOn: ["build_base"]
       dockerFile: deployment/Dockerfile
 
-  # Service Server
-  - template: templates/stages/build-container.yaml
-    parameters:
-      baseImage: assemblyline-core
-      component: assemblyline-service-server
-      dependsOn: ["build_core"]
-      dockerFile: docker/Dockerfile
-
   # Service Base
   - template: templates/stages/build-container.yaml
     parameters:
@@ -182,13 +174,6 @@ stages:
 
   - template: templates/stages/test-e2e.yaml
 
-  - template: templates/stages/test-container.yaml
-    parameters:
-      component: assemblyline-service-server
-      dependsOn: [build_service_server]
-      additionalSteps:
-        - script: |
-            docker run -d --name server --network host --restart on-failure cccstemp.azurecr.io/assemblyline-service-server:$TAG
 
   - template: templates/stages/test-container.yaml
     parameters:

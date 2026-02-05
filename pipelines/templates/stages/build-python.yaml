@@ -63,15 +63,12 @@ stages:
               echo $VERSION > assemblyline_ui/VERSION
               python -m build -w -o ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ &
 
-              # Build service server
-              cd ../assemblyline-service-server
-              echo $VERSION > assemblyline_service_server/VERSION
-              python -m build -w -o ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ &
-
+              # Build service client
               cd ../assemblyline-service-client
               echo $VERSION > assemblyline_service_client/VERSION
               python -m build -w -o ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ &
 
+              # Build service base
               cd ../assemblyline-v4-service
               echo $VERSION > assemblyline_v4_service/VERSION
               python -m build -w -o ${SYSTEM_DEFAULTWORKINGDIRECTORY}/dist/ &
