@@ -22,10 +22,12 @@ stages:
               export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_KIND}"
 
               set +xv
+              docker pull cccstemp.azurecr.io/assemblyline-rust-builder:latest
               export IMAGE=cccstemp.azurecr.io/assemblyline-rust
               docker build --build-arg version=$VERSION \
                            --build-arg version_tag=$TAG \
                            --build-arg tag=$BUILD_KIND \
+                           --build-arg build_image=cccstemp.azurecr.io/assemblyline-rust-builder:latest \
                            -t $IMAGE:$TAG \
                            -t $IMAGE:$BUILD_KIND \
                            -t $IMAGE:$SERIES . -f ./assemblyline-server/Dockerfile | while read line ; do echo "$(date) | $line"; done;
