@@ -309,7 +309,7 @@ stages:
             docker pull $BUILT_AS
 
             # Publish to public container registries
-            for IMAGE in "cccs/" "docker.pkg.github.com/cybercentrecanada/assemblyline/"
+            for IMAGE in "cccs/" "ghcr.io/cybercentrecanada/assemblyline/"
             do
               docker tag $BUILT_AS ${IMAGE}${CONTAINER_NAME}:$TAG
               docker tag $BUILT_AS ${IMAGE}${CONTAINER_NAME}:$BUILD_TYPE
