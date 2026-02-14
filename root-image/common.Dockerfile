@@ -9,4 +9,4 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 # Update setuptools package
-RUN pip install -U setuptools pip
+RUN pip install -U setuptools==81.0.0 pip
