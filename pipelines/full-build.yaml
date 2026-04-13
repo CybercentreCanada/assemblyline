@@ -54,7 +54,7 @@ resources:
         LDAP_PASSWORDS: ldap_password
         LDAP_USER_OU: people
       ports:
-        - 389:389        
+        - 389:389
   repositories:
   - repository: BuildRepo
     type: github
@@ -97,14 +97,6 @@ stages:
       component: assemblyline-core
       dependsOn: ["build_base"]
       dockerFile: deployment/Dockerfile
-
-  # Service Server
-  - template: templates/stages/build-container.yaml
-    parameters:
-      baseImage: assemblyline-core
-      component: assemblyline-service-server
-      dependsOn: ["build_core"]
-      dockerFile: docker/Dockerfile
 
   # Service Base
   - template: templates/stages/build-container.yaml
@@ -192,14 +184,6 @@ stages:
 
   - template: templates/stages/test-container.yaml
     parameters:
-      component: assemblyline-service-server
-      dependsOn: [build_service_server]
-      additionalSteps:
-        - script: |
-            docker run -d --name server --network host --restart on-failure cccstemp.azurecr.io/assemblyline-service-server:$TAG
-
-  - template: templates/stages/test-container.yaml
-    parameters:
       imageName: assemblyline-v4-service-base
       component: assemblyline-v4-service
       dependsOn: [build_v4_service_base]
@@ -207,7 +191,7 @@ stages:
   ### PUBLISHING ###
   - stage: deploy
     displayName: Deploy
-    dependsOn: [test_assemblyline, test_core, test_ui, build_frontend, test_service_server, test_v4_service_base, test_rust, build_rust]
+    dependsOn: [test_assemblyline, test_core, test_ui, build_frontend, test_v4_service_base, test_rust, build_rust]
     jobs:
     - job: deploy_python
       displayName: Deploy Python Packages
@@ -266,8 +250,6 @@ stages:
           SocketIO:
             CONTAINER_NAME: assemblyline-socketio
             DIRECTORY: assemblyline-ui
-          Service-Server:
-            CONTAINER_NAME: assemblyline-service-server
           Service-Base:
             CONTAINER_NAME: assemblyline-v4-service-base
             DIRECTORY: assemblyline-v4-service
@@ -349,7 +331,7 @@ stages:
             set -exv  # Echo commands before they are run
 
             git fetch --all
-            git checkout main              
+            git checkout main
             if git show-ref --quiet refs/remotes/origin/dev && [[ "$TAG" == *dev* ]]; then
               git checkout dev
             fi
@@ -360,7 +342,7 @@ stages:
             if [[ "$TAG" == *dev* ]]; then
               export CHART_VERSION="${CHART_VERSION}-dev"
             fi
-            
+
             chmod -R a+rw .
             sed -i 's/release: .*/release: '"$TAG"'/g' charts/assemblyline/values.yaml
             sed -i 's/version: .*/version: '"$CHART_VERSION"'/g' charts/assemblyline/Chart.yaml
