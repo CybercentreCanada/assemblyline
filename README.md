@@ -87,20 +87,6 @@ Documentation: https://cybercentrecanada.github.io/assemblyline4_docs/fr/
         </tr>
         <tr>
             <td>
-                <a href="https://github.com/CybercentreCanada/assemblyline-service-server">Assemblyline Service Server</a>
-            </td>
-            <td>
-                <a href="https://dev.azure.com/CybercentreCanada/Assemblyline/_build/latest?definitionId=26&repoName=CybercentreCanada%2Fassemblyline-service-server&branchName=master"><img src="https://dev.azure.com/CybercentreCanada/Assemblyline/_apis/build/status%2Ftest%20-%20core%20components%2Fassemblyline-service-server?repoName=CybercentreCanada%2Fassemblyline-service-server&branchName=master" alt="Main Branch Test Status"></a>
-            </td>
-            <td>
-                <a href="https://dev.azure.com/CybercentreCanada/Assemblyline/_build/latest?definitionId=26&repoName=CybercentreCanada%2Fassemblyline-service-server&branchName=dev"><img src="https://dev.azure.com/CybercentreCanada/Assemblyline/_apis/build/status%2Ftest%20-%20core%20components%2Fassemblyline-service-server?repoName=CybercentreCanada%2Fassemblyline-service-server&branchName=dev" alt="Dev Branch Test Status"></a>
-            </td>
-            <td>
-                <a href="https://pypi.org/project/assemblyline-service-server/#history"><img src="https://img.shields.io/pypi/v/assemblyline-service-server.svg" alt="Latest Stable Release"></a>
-            </td>
-        </tr>
-        <tr>
-            <td>
                 <a href="https://github.com/CybercentreCanada/assemblyline-ui">Assemblyline UI</a>
             </td>
             <td>
