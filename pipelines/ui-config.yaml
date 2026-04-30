@@ -1,4 +1,7 @@
 auth:
+  internal:
+    signup:
+      enabled: true
   ldap:
     enabled: true
     uid_field: "cn"
