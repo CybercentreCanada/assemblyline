@@ -8,6 +8,7 @@
 | 4.4.x   | :white_check_mark: |
 | 4.5.x   | :white_check_mark: |
 | 4.6.x   | :white_check_mark: |
+| 4.7.x   | :white_check_mark: |
 
 ## Reporting a Vulnerability
 
