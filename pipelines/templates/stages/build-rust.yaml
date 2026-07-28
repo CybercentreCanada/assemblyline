@@ -64,9 +64,6 @@ stages:
               export RUST_BASE=cccstemp.azurecr.io/assemblyline-rust-builder:latest
               export IMAGE=cccstemp.azurecr.io/assemblyline-rust-service-base
 
-              # use python packages from current pipeline
-              mv ../dist/ dist
-
               set +xv
               docker pull $RUST_BASE
               docker build --build-arg version=$VERSION \
