@@ -64,6 +64,9 @@ stages:
               export RUST_BASE=cccstemp.azurecr.io/assemblyline-rust-builder:latest
               export IMAGE=cccstemp.azurecr.io/assemblyline-rust-service-base
 
+              ls .
+              ls working/
+
               set +xv
               docker pull $RUST_BASE
               docker build --build-arg version=$VERSION \
