@@ -10,6 +10,7 @@ stages:
           redis: redis
           minio: minio
           openldap: openldap
+          keycloak: keycloak
         displayName: Test UI Image
         steps:
           - checkout: none
@@ -22,6 +23,9 @@ stages:
               containerRegistry: cccstemp
           - script: |
               set -e
+
+              # Wait until KeyCloak reports a healthy status before continuing
+              wget http://localhost:8081/health/ready --timeout=2 --retry-on-http-error=502 --retry-on-http-error=503 --waitretry=10 --retry-connrefused
 
               docker run -d --name ui --network host -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml -v $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml --restart on-failure cccstemp.azurecr.io/assemblyline-ui:$TAG &
               docker run -d --name socketsrv --network host -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml -v $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml --restart on-failure cccstemp.azurecr.io/assemblyline-socketio:$TAG &

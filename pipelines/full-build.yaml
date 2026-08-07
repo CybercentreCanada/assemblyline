@@ -55,6 +55,16 @@ resources:
         LDAP_USER_OU: people
       ports:
         - 389:389
+    - container: keycloak
+      image: docker.io/keycloak/keycloak:26.7
+      env:
+        KC_HEALTH_ENABLED: true
+      volumes:
+        - ./pipelines/keycloak-realm.json:/opt/keycloak/data/import/realm.json
+      command: start-dev --import-realm
+      ports:
+        - 8080:8080
+        - 8081:9000
   repositories:
   - repository: BuildRepo
     type: github
