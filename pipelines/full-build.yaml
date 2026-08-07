@@ -107,7 +107,6 @@ stages:
       dockerFile: docker/Dockerfile
       imageName: assemblyline-v4-service-base
 
-
   # ResultSample Service
   - template: templates/stages/build-container.yaml
     parameters:
@@ -191,7 +190,7 @@ stages:
   ### PUBLISHING ###
   - stage: deploy
     displayName: Deploy
-    dependsOn: [test_assemblyline, test_core, test_ui, build_frontend, test_v4_service_base, test_rust, build_rust]
+    dependsOn: [test_assemblyline, test_core, test_ui, build_frontend, test_v4_service_base, test_rust, build_rust, build_rust_service_base]
     jobs:
     - job: deploy_python
       displayName: Deploy Python Packages
@@ -257,6 +256,8 @@ stages:
             CONTAINER_NAME: assemblyline-service-resultsample
             DIRECTORY: assemblyline-v4-service
             README_PATH: assemblyline-v4-service/assemblyline_result_sample_service/README.md
+          RustServiceBase:
+            CONTAINER_NAME: assemblyline-rust-service-base
       steps:
         - checkout: none
         - task: Docker@2
