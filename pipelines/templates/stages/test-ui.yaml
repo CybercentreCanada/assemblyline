@@ -10,7 +10,6 @@ stages:
           redis: redis
           minio: minio
           openldap: openldap
-          keycloak: keycloak
         displayName: Test UI Image
         steps:
           - checkout: none
@@ -24,8 +23,9 @@ stages:
           - script: |
               set -e
 
-              # Wait until KeyCloak reports a healthy status before continuing
-              wget http://localhost:8081/health/ready --timeout=2 --retry-on-http-error=502 --retry-on-http-error=503 --waitretry=10 --retry-connrefused
+              # Start up a KeyCloak instance for OAuth testing
+
+              docker run -d --name keycloak -e KC_HEALTH_ENABLED=true -v "$(Pipeline.Workspace)/working/pipelines/keycloak-realm.json:/opt/keycloak/data/import/realm.json:ro" -p 8080:8080 --health-cmd="bash -c \"{ printf 'HEAD /health/ready HTTP/1.0\r\n\r\n' >&0; grep 'HTTP/1.0 200'; } 0<>/dev/tcp/localhost/9000\"" --health-interval=5s --health-timeout=5s --health-retries=3 --health-start-period=10s quay.io/keycloak/keycloak:26.7 start-dev --import-realm
 
               docker run -d --name ui --network host -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml -v $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml --restart on-failure cccstemp.azurecr.io/assemblyline-ui:$TAG &
               docker run -d --name socketsrv --network host -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml -v $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml --restart on-failure cccstemp.azurecr.io/assemblyline-socketio:$TAG &
