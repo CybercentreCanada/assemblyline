@@ -55,6 +55,12 @@ resources:
         LDAP_USER_OU: people
       ports:
         - 389:389
+    - container: floci
+      image: floci/floci
+      env:
+        FLOCI_SERVICES_IAM_ENFORCEMENT_ENABLED: "true"
+      ports:
+        - 4566:4566
   repositories:
   - repository: BuildRepo
     type: github
