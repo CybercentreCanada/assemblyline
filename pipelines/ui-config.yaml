@@ -16,6 +16,13 @@ auth:
         allow_external_tokens: true
         external_token_alternate_audiences:
           - "account"
+        azp_role_limits:
+          clue:
+            - submission_view
+            - badlist_view
+            - safelist_view
+            - alert_view
+            - submission_create
         auto_properties:
           - field: email
             pattern: .*
