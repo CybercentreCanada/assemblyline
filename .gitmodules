@@ -22,3 +22,7 @@
 	path = assemblyline-ui-frontend
 	url = https://github.com/CybercentreCanada/assemblyline-ui-frontend.git
 	branch = .
+[submodule "assemblyline-mcp"]
+	path = assemblyline-mcp
+	url = https://github.com/CybercentreCanada/assemblyline-mcp.git
+	branch = .

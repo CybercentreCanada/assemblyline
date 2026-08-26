@@ -132,6 +132,15 @@ stages:
       dockerFile: docker/ui/Dockerfile
       imageName: assemblyline-ui
 
+  # MCP
+  - template: templates/stages/build-container.yaml
+    parameters:
+      baseImage: astral/uv:python3.14-alpine # This is ignore by the Dockerfile
+      component: assemblyline-mcp
+      dependsOn: []                          # Standalone component, no Assemblyline dependencies for build
+      dockerFile: Dockerfile
+      imageName: assemblyline-mcp
+
   # SocketIO
   - template: templates/stages/build-container.yaml
     parameters:
@@ -186,6 +195,8 @@ stages:
 
   - template: templates/stages/test-ui.yaml
 
+  - template: templates/stages/test-mcp.yaml
+
   - template: templates/stages/test-e2e.yaml
 
   - template: templates/stages/test-container.yaml
@@ -197,7 +208,7 @@ stages:
   ### PUBLISHING ###
   - stage: deploy
     displayName: Deploy
-    dependsOn: [test_assemblyline, test_core, test_ui, build_frontend, test_v4_service_base, test_rust, build_rust]
+    dependsOn: [test_assemblyline, test_core, test_ui, build_frontend, test_v4_service_base, test_rust, build_rust, test_mcp]
     jobs:
     - job: deploy_python
       displayName: Deploy Python Packages
@@ -253,6 +264,8 @@ stages:
             README_PATH: plugins/external_lookup/virustotal/README.md
           UI-frontend:
             CONTAINER_NAME: assemblyline-ui-frontend
+          MCP:
+            CONTAINER_NAME: assemblyline-mcp
           SocketIO:
             CONTAINER_NAME: assemblyline-socketio
             DIRECTORY: assemblyline-ui
