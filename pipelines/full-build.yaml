@@ -285,8 +285,8 @@ stages:
               CONTAINER_NAME: assemblyline-service-resultsample
               DIRECTORY: assemblyline-v4-service
               README_PATH: assemblyline-v4-service/assemblyline_result_sample_service/README.md
-          RustServiceBase:
-            CONTAINER_NAME: assemblyline-rust-service-base              
+            RustServiceBase:
+              CONTAINER_NAME: assemblyline-rust-service-base              
         steps:
           - checkout: none
           - task: Docker@2
