@@ -81,7 +81,7 @@ stages:
                 -v `pwd`:/test:ro \
                 -w /test \
                 cccstemp.azurecr.io/assemblyline-ui:$TAG \
-                /bin/bash -c "pip install .[test]; CI=1 pytest -rsx --durations=10"
+                /bin/bash -c "pip install .[test] --only-deps; CI=1 pytest -rsx --durations=10"
 
               # Push images to registry if tests pass
               docker push $IMAGE -q --all-tags
