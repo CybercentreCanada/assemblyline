@@ -17,7 +17,7 @@ variables:
     # Set variables for tag builds
     TAG: ${{ replace(variables['Build.SourceBranch'], 'refs/tags/v', '') }}
     VERSION: ${{ variables['TAG'] }}
-    BUILD_TYPE: ${{ if contains(variables['TAG'], 'stable') }}stable${{ else }}latest${{ end }}
+    BUILD_TYPE: ${{ iif(contains(variables['TAG'], 'stable'), 'stable', 'latest') }}
     SERIES: ${{ format('4.{0}.{1}', split(variables['TAG'], '.')[1], variables['BUILD_TYPE']) }}
   ${{ else }}:
     # Default values for non-tag builds

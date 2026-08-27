@@ -59,11 +59,6 @@ stages:
 
           - script: |
               set -exv
-              if [[ "$TAG" == *stable* ]]; then export BUILD_TYPE=stable; else export BUILD_TYPE=latest; fi
-              export VERSION=${TAG/stable}
-              export VERSION=${VERSION/beta/b}
-              export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_TYPE}"
-
               export IMAGE=cccstemp.azurecr.io/assemblyline-ui-frontend
 
               docker build \
