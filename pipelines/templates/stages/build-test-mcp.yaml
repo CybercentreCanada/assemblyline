@@ -49,6 +49,7 @@ stages:
               # Start UI
               docker run -d --name ui \
                 --network host \
+                -e AL_UNSECURED_UI=true \
                 -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml \
                 -v $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml \
                 --restart on-failure \
