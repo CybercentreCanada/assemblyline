@@ -19,6 +19,10 @@ stages:
             inputs:
               command: login
               containerRegistry: cccstemp
+          - task: UsePythonVersion@0
+            displayName: Set python version
+            inputs:
+              versionSpec: 3.14
           - script: |
               set -e
 
