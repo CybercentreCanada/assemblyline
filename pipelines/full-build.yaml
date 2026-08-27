@@ -1,5 +1,5 @@
 
-name: ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/v') }} build ${{ else }} test ${{ end }}
+name: ${{ iif(startsWith(variables['Build.SourceBranch'], 'refs/tags/v'), 'build', 'test') }}
 
 
 trigger:
