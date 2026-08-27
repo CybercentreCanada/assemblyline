@@ -217,7 +217,7 @@ stages:
   - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/v') }}:
     - stage: deploy
       displayName: Deploy
-      dependsOn: [test_assemblyline, test_core, test_ui, build_frontend, test_v4_service_base, test_rust, build_rust, build_rust_service_base, test_mcp]
+      dependsOn: [test_assemblyline, test_core, test_ui, build_frontend, test_v4_service_base, test_rust, build_rust, build_rust_service_base, build_test_mcp]
       jobs:
       - job: deploy_python
         displayName: Deploy Python Packages
