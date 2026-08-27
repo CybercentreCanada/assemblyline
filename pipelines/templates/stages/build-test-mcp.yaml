@@ -70,9 +70,6 @@ stages:
                 cccs/nginx-ssl-frontend:dev &
               wait
 
-
-              wget https://localhost/mcp/ --no-check-certificate --timeout=2 --retry-on-http-error=502 --waitretry=10 --retry-connrefused
-
               # Install MCP test dependencies
               sudo env "PATH=$PATH" "PIP_USE_PEP517=true" python -m pip install --no-cache-dir -e .[test]
 
