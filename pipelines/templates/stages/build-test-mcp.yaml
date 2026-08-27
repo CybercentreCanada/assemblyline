@@ -78,6 +78,8 @@ stages:
               sudo env "PATH=$PATH" "PIP_USE_PEP517=true" python -m pip install --no-cache-dir -e .[test]
 
               # Run MCP tests
+              mkdir -p /etc/assemblyline
+              cp $(Pipeline.Workspace)/working/pipelines/ui-config.yaml /etc/assemblyline/config.yml
               pytest -rsx -vv
 
               # Push images to registry if tests pass
