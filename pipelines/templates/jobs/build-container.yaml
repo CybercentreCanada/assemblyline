@@ -43,6 +43,9 @@ jobs:
             mv ../dist/ dist
           fi
 
+          export VERSION=${VERSION/stable}
+          export VERSION=${VERSION/beta/b}
+
           export BASE=cccstemp.azurecr.io/${{ parameters.baseImage }}
           export IMAGE=cccstemp.azurecr.io/${{ parameters.imageName }}
 

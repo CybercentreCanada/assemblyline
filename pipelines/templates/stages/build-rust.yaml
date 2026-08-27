@@ -17,6 +17,9 @@ stages:
           - script: |
               set -exv  # Echo commands before they are run
 
+              export VERSION=${VERSION/stable}
+              export VERSION=${VERSION/beta/b}
+
               set +xv
               docker pull cccstemp.azurecr.io/assemblyline-rust-builder:latest
               export IMAGE=cccstemp.azurecr.io/assemblyline-rust
