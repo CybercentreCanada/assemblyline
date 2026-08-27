@@ -13,8 +13,6 @@ stages:
           - script: |
               set -e
               # Figure out what the build kind is
-              export TAG=${BUILD_SOURCEBRANCH#"refs/tags/"}
-              export VERSION=${BUILD_SOURCEBRANCH#"refs/tags/v"}
               if [[ "$VERSION" == *stable* ]];
               then
                 export BRANCH=main;
@@ -31,8 +29,12 @@ stages:
 
               git fetch origin ${BRANCH}
               git checkout ${BRANCH}
-              git tag ${TAG}
-              git push origin ${TAG}
+              if [[ "$BUILD_TYPE" != "test" ]];
+              then
+                # Tag the source with the same tag as the main repo
+                git tag ${TAG}
+                git push origin ${TAG}
+              fi
 
             workingDirectory: $(Pipeline.Workspace)/assemblyline-rust
             displayName: Tag Source

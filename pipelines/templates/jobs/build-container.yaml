@@ -38,11 +38,6 @@ jobs:
           containerRegistry: cccstemp
       - script: |
           set -exv  # Echo commands before they are run
-          if [[ "$TAG" == *stable* ]]; then export BUILD_KIND=stable; else export BUILD_KIND=latest; fi
-          export VERSION=${TAG/stable}
-          export VERSION=${VERSION/beta/b}
-          export SERIES="`expr $TAG : '\([0-9]\+\.[0-9]\+\.\)'`${BUILD_KIND}"
-
           if [[ "${{ parameters.workingDirectory }}" = *${{ parameters.component }} ]]
           then
             mv ../dist/ dist
@@ -53,8 +48,8 @@ jobs:
 
           docker build --build-arg base=$BASE \
                         --build-arg version=$VERSION \
-                        --build-arg branch=$BUILD_KIND \
-                        -t $IMAGE:$TAG -t $IMAGE:$BUILD_KIND -t $IMAGE:$SERIES \
+                        --build-arg branch=$BUILD_TYPE \
+                        -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES \
                         -f ${{ parameters.dockerFile }} ${{ parameters.buildContext }}
           docker push $IMAGE -q --all-tags
         workingDirectory: ${{ parameters.workingDirectory }}

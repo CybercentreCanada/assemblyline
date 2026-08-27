@@ -4,13 +4,27 @@ name: build
 trigger:
   tags:
     include: ["v*"]
+  branches:
+    exclude:
+      - "main"    
 pr: none
 
 pool:
   vmImage: "ubuntu-latest"
 
 variables:
-  TAG: ${{ replace(variables['Build.SourceBranch'], 'refs/tags/v', '') }}
+  ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/v') }}:
+    # Set variables for tag builds
+    TAG: ${{ replace(variables['Build.SourceBranch'], 'refs/tags/v', '') }}
+    VERSION: ${{ variables['TAG'] }}
+    BUILD_TYPE: ${{ if contains(variables['TAG'], 'stable') }}stable${{ else }}latest${{ end }}
+    SERIES: ${{ format('4.{0}.{1}', split(variables['TAG'], '.')[1], variables['BUILD_TYPE']) }}
+  ${{ else }}:
+    # Default values for non-tag builds
+    TAG: "5.0.0.dev0"
+    VERSION: "5.0.0.dev0"
+    BUILD_TYPE: "test"
+    SERIES: "5.0.dev"
 
 resources:
   containers:
@@ -208,6 +222,7 @@ stages:
   ### PUBLISHING ###
   - stage: deploy
     displayName: Deploy
+    condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
     dependsOn: [test_assemblyline, test_core, test_ui, build_frontend, test_v4_service_base, test_rust, build_rust, test_mcp]
     jobs:
     - job: deploy_python
