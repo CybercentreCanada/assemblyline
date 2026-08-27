@@ -1,15 +1,15 @@
 stages:
-  - stage: test_mcp
-    displayName: Test MCP
-    dependsOn: [build_ui, build_mcp]
+  - stage: build_test_mcp
+    displayName: Build & Test MCP
+    dependsOn: [build_ui]
     jobs:
-      - job: test_mcp
+      - job: build_test_mcp
         timeoutInMinutes: 10
         services:
           elasticsearch: elasticsearch
           redis: redis
           minio: minio
-        displayName: Test MCP Image
+        displayName: Build & Test MCP Image
         steps:
           - checkout: none
           - download: current
@@ -21,6 +21,14 @@ stages:
               containerRegistry: cccstemp
           - script: |
               set -e
+
+              # Build MCP image
+              export IMAGE=cccstemp.azurecr.io/assemblyline-mcp
+              docker build --build-arg base=$BASE \
+                            --build-arg version=$VERSION \
+                            --build-arg branch=$BUILD_TYPE \
+                            -t $IMAGE:$TAG -t $IMAGE:$BUILD_TYPE -t $IMAGE:$SERIES \
+                            .
 
               # Start up a KeyCloak instance for OAuth testing
               docker run -d --name keycloak \
@@ -46,9 +54,9 @@ stages:
                 --health-retries=3 \
                 --health-start-period=10s \
                 cccstemp.azurecr.io/assemblyline-ui:$TAG &
-
+              
               # Start MCP
-              docker run -d --name mcp --network host --restart on-failure cccstemp.azurecr.io/assemblyline-mcp:$TAG &
+              docker run -d --name mcp --network host --restart on-failure $IMAGE:$TAG &
 
               # Start Ingress for routing
               docker run -d --name nginx \
@@ -69,6 +77,9 @@ stages:
 
               # Run MCP tests
               pytest -rsx -vv
+
+              # Push images to registry if tests pass
+              docker push $IMAGE -q --all-tags
 
             workingDirectory: $(Pipeline.Workspace)/working/assemblyline-mcp
             displayName: Test MCP

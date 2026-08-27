@@ -110,6 +110,9 @@ stages:
   # Build/Test Frontend
   - template: templates/stages/build-test-frontend.yaml
 
+  # Build/Test MCP
+  - template: templates/stages/build-test-mcp.yaml
+
   # Build Base
   - template: templates/stages/build-base.yaml
 
@@ -148,15 +151,6 @@ stages:
       dependsOn: ["build_base"]
       dockerFile: docker/ui/Dockerfile
       imageName: assemblyline-ui
-
-  # MCP
-  - template: templates/stages/build-container.yaml
-    parameters:
-      baseImage: astral/uv:python3.14-alpine # This is ignore by the Dockerfile
-      component: assemblyline-mcp
-      dependsOn: []                          # Standalone component, no Assemblyline dependencies for build
-      dockerFile: Dockerfile
-      imageName: assemblyline-mcp
 
   # SocketIO
   - template: templates/stages/build-container.yaml
@@ -210,9 +204,7 @@ stages:
       component: assemblyline-core
       dependsOn: [build_core]
 
-  - template: templates/stages/test-ui.yaml
-
-  - template: templates/stages/test-mcp.yaml
+  - template: templates/stages/test-ui.yaml  
 
   - template: templates/stages/test-e2e.yaml
 
