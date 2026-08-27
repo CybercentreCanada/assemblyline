@@ -77,12 +77,15 @@ stages:
               # Install MCP test dependencies
               sudo env "PATH=$PATH" "PIP_USE_PEP517=true" python -m pip install --no-cache-dir -e .[test]
 
+              # Install Pytest-timeout for test timeouts
+              sudo env "PATH=$PATH" "PIP_USE_PEP517=true" python -m pip install --no-cache-dir pytest-timeout
+
               # Setup config for MCP tests
               sudo mkdir -p /etc/assemblyline
               sudo cp $(Pipeline.Workspace)/working/pipelines/ui-config.yaml /etc/assemblyline/config.yml
 
-              # Run tests
-              CI=1 pytest -rsx --durations=10
+              # Run tests (actual runtime should take 60s or less)
+              PYTEST_TIMEOUT=60 CI=1 pytest -vv -rsx --durations=10
 
               # Push images to registry if tests pass
               docker push $IMAGE -q --all-tags
