@@ -19,6 +19,10 @@ stages:
             inputs:
               command: login
               containerRegistry: cccstemp
+          - task: UsePythonVersion@0
+            displayName: Set python version
+            inputs:
+              versionSpec: 3.14
           - script: |
               set -e
 
@@ -70,14 +74,15 @@ stages:
                 cccs/nginx-ssl-frontend:dev &
               wait
 
-              # Run MCP tests
-              docker run --name test \
-                --network host \
-                -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml:ro \
-                -v `pwd`:/test:ro \
-                -w /test \
-                cccstemp.azurecr.io/assemblyline-ui:$TAG \
-                /bin/bash -c "pip install .[test] --only-deps; CI=1 pytest -rsx --durations=10"
+              # Install MCP test dependencies
+              sudo env "PATH=$PATH" "PIP_USE_PEP517=true" python -m pip install --no-cache-dir -e .[test]
+
+              # Setup config for MCP tests
+              sudo mkdir -p /etc/assemblyline
+              sudo cp $(Pipeline.Workspace)/working/pipelines/ui-config.yaml /etc/assemblyline/config.yml
+
+              # Run tests
+              CI=1 pytest -rsx --durations=10
 
               # Push images to registry if tests pass
               docker push $IMAGE -q --all-tags
