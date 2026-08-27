@@ -19,6 +19,9 @@ stages:
               cd assemblyline-base
               mv ../dist/ dist
 
+              export VERSION=${VERSION/stable}
+              export VERSION=${VERSION/beta/b}
+
               docker pull cccstemp.azurecr.io/assemblyline-root-build:$BUILD_TYPE &
               docker pull cccstemp.azurecr.io/assemblyline-root:$BUILD_TYPE &
               wait
