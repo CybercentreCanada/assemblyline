@@ -29,7 +29,7 @@ stages:
 
               git fetch origin ${BRANCH}
               git checkout ${BRANCH}
-              if [[ "$BUILD_TYPE" != "test" ]];
+              if [[ "${PUSH_TAGS,,}" == "true" ]];
               then
                 # Tag the source with the same tag as the main repo
                 git tag ${TAG}

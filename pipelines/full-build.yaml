@@ -19,12 +19,14 @@ variables:
     VERSION: ${{ variables['TAG'] }}
     BUILD_TYPE: ${{ iif(contains(variables['TAG'], 'stable'), 'stable', 'latest') }}
     SERIES: ${{ format('4.{0}.{1}', split(variables['TAG'], '.')[1], variables['BUILD_TYPE']) }}
+    PUSH_TAGS: true
   ${{ else }}:
     # Default values for non-tag builds
     TAG: "5.0.0.dev0"
     VERSION: "5.0.0.dev0"
-    BUILD_TYPE: "test"
-    SERIES: "5.0.dev"
+    BUILD_TYPE: "latest"
+    SERIES: "5.0.latest"
+    PUSH_TAGS: false
 
 resources:
   containers:
@@ -222,7 +224,7 @@ stages:
   ### PUBLISHING ###
   - stage: deploy
     displayName: Deploy
-    condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
+    condition: and(succeeded(), variables['PUSH_TAGS'])
     dependsOn: [test_assemblyline, test_core, test_ui, build_frontend, test_v4_service_base, test_rust, build_rust, test_mcp]
     jobs:
     - job: deploy_python
