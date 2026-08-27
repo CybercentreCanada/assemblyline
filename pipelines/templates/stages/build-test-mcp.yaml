@@ -74,14 +74,11 @@ stages:
                 cccs/nginx-ssl-frontend:dev &
               wait
 
-              # Install MCP test dependencies
-              sudo env "PATH=$PATH" "PIP_USE_PEP517=true" python -m pip install --no-cache-dir -e .[test]
-
               # Run MCP tests
               docker run --name test \
                 --network host \
-                -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml \
-                -v `pwd`:/test \
+                -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml:ro \
+                -v `pwd`:/test:ro \
                 -w /test \
                 cccstemp.azurecr.io/assemblyline-ui:$TAG \
                 /bin/bash -c "pip install .[test]; CI=1 pytest -rsx --durations=10"
