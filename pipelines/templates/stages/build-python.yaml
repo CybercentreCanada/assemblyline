@@ -16,24 +16,29 @@ stages:
               set -ex  # Echo commands before they are run
 
               # Figure out what the build kind is
-              if [[ "$VERSION" == *stable* ]];
-              then
-                export BRANCH=master;
-              elif [[ "$VERSION" == *dev* ]];
-              then
-                export BRANCH=dev;
-              else
+              if [[ "$VERSION" == !(*stable*|*dev*) ]]; then
                 exit 1;
               fi
 
-              echo "Building $VERSION On branch $BRANCH"
               export VERSION=${VERSION/stable}
               export VERSION=${VERSION/beta/b}
 
               # make sure we are on the right branches for all other repos
               git config --global http.extraheader "`git config --get http.https://github.com/CybercentreCanada/assemblyline.extraheader`"
-              git submodule foreach git checkout -B $BRANCH --track origin/$BRANCH
-              git submodule foreach git pull
+              git submodule foreach '
+                branch=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed "s#^origin/##")
+                if [[ -z "$branch" ]]; then
+                  branch=main
+                fi
+
+                if [[ "${BUILD_TYPE}" == "latest" ]]; then
+                  branch=dev
+                fi
+
+                echo "Building ${VERSION} on submodule branch $branch"
+                git checkout -B "$branch" --track "origin/$branch" 2>/dev/null || git checkout "$branch"
+                git pull
+              '
               if [[ "${PUSH_TAGS,,}" == "true" ]];
               then
                 # Tag all submodules with the same tag as the main repo
