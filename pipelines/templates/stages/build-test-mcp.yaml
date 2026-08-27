@@ -53,6 +53,7 @@ stages:
                 --health-timeout=30s \
                 --health-retries=3 \
                 --health-start-period=10s \
+                --add-host=localhost:host-gateway \
                 cccstemp.azurecr.io/assemblyline-ui:$TAG &
               
               # Start MCP
@@ -66,7 +67,7 @@ stages:
                 -e "MCP_HOST=127.0.0.1" \
                 -e "ACCESS_LOG=/dev/stdout" \
                 -e "ERROR_LEVEL=info" \
-                cccs/nginx-ssl-frontend &
+                cccs/nginx-ssl-frontend:dev &
               wait
 
 
