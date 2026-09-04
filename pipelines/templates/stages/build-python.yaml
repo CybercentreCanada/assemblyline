@@ -31,7 +31,6 @@ stages:
               export VERSION=${VERSION/beta/b}
 
               # make sure we are on the right branches for all other repos
-              git config --global http.extraheader "`git config --get http.https://github.com/CybercentreCanada/assemblyline.extraheader`"
               git submodule foreach git checkout -B $BRANCH --track origin/$BRANCH
               git submodule foreach git pull
               if [[ "${PUSH_TAGS,,}" == "true" ]];
