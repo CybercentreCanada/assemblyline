@@ -26,11 +26,11 @@ stages:
               # make sure we are on the right branches for all other repos
               git submodule foreach '
                 branch=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed "s#^origin/##")
-                if [[ -z "$branch" ]]; then
+                if [ -z "$branch" ]; then
                   branch=main
                 fi
 
-                if [[ "${BUILD_TYPE}" == "latest" ]]; then
+                if [ "$BUILD_TYPE" = "latest" ]; then
                   branch=dev
                 fi
 
