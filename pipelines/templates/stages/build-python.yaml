@@ -30,7 +30,7 @@ stages:
                   branch=main
                 fi
 
-                if [ "$BUILD_TYPE" == "latest" ]; then
+                if [ "$BUILD_TYPE" = "latest" ]; then
                   branch=dev
                 fi
 
