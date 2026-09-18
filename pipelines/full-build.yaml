@@ -54,6 +54,7 @@ resources:
         ELASTIC_PASSWORD: devpass
       ports:
         - 9200:9200
+      options: '--tmpfs /usr/share/elasticsearch/data'
     - container: minio
       image: cccs/minio
       env:
