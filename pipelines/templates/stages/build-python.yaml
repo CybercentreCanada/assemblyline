@@ -38,7 +38,7 @@ stages:
                 branch=image_upgrade
 
                 echo "Building ${VERSION} on submodule branch $branch"
-                git checkout -B "$branch" --track "origin/$branch" 2>/dev/null || git checkout "$branch"
+                git checkout -B "$branch" --track "origin/$branch" 2>/dev/null || git checkout "$branch" || git checkout "dev"
                 git pull
               '
               if [[ "${PUSH_TAGS,,}" == "true" ]];
