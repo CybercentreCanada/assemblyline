@@ -34,6 +34,9 @@ stages:
                   branch=dev
                 fi
 
+                # Explicitly set the branch for testing
+                branch=image_upgrade
+
                 echo "Building ${VERSION} on submodule branch $branch"
                 git checkout -B "$branch" --track "origin/$branch" 2>/dev/null || git checkout "$branch"
                 git pull
