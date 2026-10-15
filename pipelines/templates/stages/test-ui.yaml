@@ -33,17 +33,14 @@ stages:
               # Start all services except pytest
               docker compose -f docker-compose.yml -f override.yml up -d --wait $(docker compose config --services | grep -v "pytest")
 
-              # Create the test requirements file from the pyproject.toml file
-              python -c "import tomllib; data = tomllib.load(open('pyproject.toml', 'rb')); deps = data['project']['optional-dependencies']['test']; open('test/requirements.txt', 'w').write('\n'.join(deps))"
-
               # Start up pytest service from Docker Compose and run the tests
               docker compose run --build pytest CI=1 pytest -rsx --durations=10
             workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/test
             displayName: Test UI
-          - script: docker logs ui
+          - script: docker logs al_ui
             condition: failed()
             displayName: UI Logs
-          - script: docker logs socketsrv
+          - script: docker logs al_socketio
             condition: failed()
             displayName: SocketIO Logs
           - script: docker logs nginx
