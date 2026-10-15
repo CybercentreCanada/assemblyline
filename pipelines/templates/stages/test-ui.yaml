@@ -19,7 +19,7 @@ stages:
               set -e
 
               # Create an override file for the Docker Compose services with the specified images and tags
-              cat <<EOF > override.yaml
+              cat <<EOF > override.yml
               services:
                 al_ui:
                   build: !reset null
@@ -31,7 +31,7 @@ stages:
               EOF
 
               # Start all services except pytest
-              docker compose -f docker-compose.yaml -f override.yaml up -d --wait $(docker compose config --services | grep -v "pytest")
+              docker compose -f docker-compose.yml -f override.yml up -d --wait $(docker compose config --services | grep -v "pytest")
 
               # Create the test requirements file from the pyproject.toml file
               python -c "import tomllib; data = tomllib.load(open('pyproject.toml', 'rb')); deps = data['project']['optional-dependencies']['test']; open('test/requirements.txt', 'w').write('\n'.join(deps))"
@@ -46,9 +46,6 @@ stages:
           - script: docker logs socketsrv
             condition: failed()
             displayName: SocketIO Logs
-          - script: docker logs frontend
-            condition: failed()
-            displayName: Frontend Logs
           - script: docker logs nginx
             condition: failed()
             displayName: NGINX Logs
