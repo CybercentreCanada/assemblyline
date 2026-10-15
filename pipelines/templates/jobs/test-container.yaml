@@ -19,7 +19,7 @@ jobs:
           sftp: sftp
           redis: redis
           minio: minio
-          floci: floci          
+          floci: floci
     steps:
       - checkout: none
       - download: current
@@ -35,6 +35,10 @@ jobs:
       - script: |
           set -exv  # Echo commands before they are run
           export IMAGE=cccstemp.azurecr.io/${{ parameters.imageName }}
+
+          # Create the test requirements file from the pyproject.toml file
+          python -c "import tomllib; data = tomllib.load(open('pyproject.toml', 'rb')); deps = data['project']['optional-dependencies']['test']; open('test/requirements.txt', 'w').write('\n'.join(deps))"
+
           docker run -v `pwd`/test:/test \
                       -v $(Pipeline.Workspace)/working/pipelines/base-config.yaml:/etc/assemblyline/config.yml \
                       -w /test \
