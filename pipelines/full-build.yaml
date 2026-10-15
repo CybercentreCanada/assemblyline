@@ -7,7 +7,7 @@ trigger:
     include: ["v*"]
   branches:
     exclude:
-      - "main"    
+      - "main"
 pr: none
 
 pool:
@@ -204,7 +204,7 @@ stages:
       component: assemblyline-core
       dependsOn: [build_core]
 
-  - template: templates/stages/test-ui.yaml  
+  - template: templates/stages/test-ui.yaml
 
   - template: templates/stages/test-e2e.yaml
 
@@ -232,7 +232,7 @@ stages:
           - task: UsePythonVersion@0
             displayName: Set python version
             inputs:
-              versionSpec: 3.11
+              versionSpec: 3.14
           - script: |
               set -exv  # Echo commands before they are run
               sudo env "PATH=$PATH" "PIP_USE_PEP517=true" python -m pip install --no-cache-dir -U packaging twine
