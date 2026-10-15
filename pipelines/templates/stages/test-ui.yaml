@@ -37,6 +37,9 @@ stages:
               wget http://localhost:5002/healthz/ready --timeout=2 --retry-on-http-error=502 --retry-on-http-error=503 --waitretry=10 --retry-connrefused
               wget https://localhost --no-check-certificate --timeout=2 --retry-on-http-error=502 --waitretry=10 --retry-connrefused
 
+              # Create the test requirements file from the pyproject.toml file
+              python -c "import tomllib; data = tomllib.load(open('pyproject.toml', 'rb')); deps = data['project']['optional-dependencies']['test']; open('test/requirements.txt', 'w').write('\n'.join(deps))"
+
               docker run -v `pwd`/test:/test \
                           -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml \
                           -v $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml \
