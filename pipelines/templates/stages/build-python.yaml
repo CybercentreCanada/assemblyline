@@ -11,7 +11,7 @@ stages:
           - task: UsePythonVersion@0
             displayName: Set python version
             inputs:
-              versionSpec: 3.14
+              versionSpec: 3.1
           - script: |
               set -ex  # Echo commands before they are run
 
@@ -34,11 +34,8 @@ stages:
                   branch=dev
                 fi
 
-                # Explicitly set the branch for testing
-                branch=image_upgrade
-
                 echo "Building ${VERSION} on submodule branch $branch"
-                git checkout -B "$branch" --track "origin/$branch" 2>/dev/null || git checkout "$branch" || git checkout "dev"
+                git checkout -B "$branch" --track "origin/$branch" 2>/dev/null || git checkout "$branch"
                 git pull
               '
               if [[ "${PUSH_TAGS,,}" == "true" ]];
