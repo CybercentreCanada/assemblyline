@@ -56,12 +56,15 @@ stages:
               docker compose -f docker-compose.yml -f override.yml run pytest
             workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/test
             displayName: Test UI
-          - script: docker logs al_ui
+          - script: docker compose logs al_ui
             condition: failed()
             displayName: UI Logs
-          - script: docker logs al_socketio
+            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/test
+          - script: docker compose logs al_socketio
             condition: failed()
             displayName: SocketIO Logs
-          - script: docker logs nginx
+            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/test
+          - script: docker compose logs nginx
             condition: failed()
             displayName: NGINX Logs
+            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/test
