@@ -34,7 +34,7 @@ stages:
               docker compose -f docker-compose.yml -f override.yml up -d --wait $(docker compose config --services | grep -v "pytest")
 
               # Start up pytest service from Docker Compose and run the tests
-              docker compose run --build pytest CI=1 pytest -rsx --durations=10
+              docker compose -f docker-compose.yml -f override.yml run --build pytest CI=1 pytest -rsx --durations=10
             workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/test
             displayName: Test UI
           - script: docker logs al_ui
