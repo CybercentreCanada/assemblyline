@@ -33,7 +33,7 @@ stages:
                   image: cccstemp.azurecr.io/assemblyline-socketio:$TAG
                   environment:
                     CI: "1"
-                  command: "pip install -r requirements.txt; pytest -rsx --durations=10"
+                  command: "pip install -r requirements.txt && pytest -rsx --durations=10"
                   volumes:
                     - .:/test
                   working_dir: /test
