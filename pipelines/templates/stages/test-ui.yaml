@@ -32,7 +32,9 @@ stages:
 
               # Start all services except pytest
               docker compose -f docker-compose.yml -f override.yml up -d --wait $(docker compose config --services | grep -v "pytest")
-
+            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/test
+            displayName: Setup environment
+          - script: |
               # Start up pytest service from Docker Compose and run the tests
               docker compose -f docker-compose.yml -f override.yml run -e CI=1 --build pytest \
                 pytest -rsx --durations=10
