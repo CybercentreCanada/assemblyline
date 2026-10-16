@@ -24,13 +24,11 @@ stages:
                 al_ui:
                   build: !reset null
                   image: cccstemp.azurecr.io/assemblyline-ui:$TAG
-                  volumes:
-                    - $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml
+                  command: !reset null
                 al_socketio:
                   build: !reset null
                   image: cccstemp.azurecr.io/assemblyline-socketio:$TAG
-                  volumes:
-                    - $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml
+                  command: !reset null
                 pytest:
                   build: !reset null
                   image: cccstemp.azurecr.io/assemblyline-socketio:$TAG
@@ -39,7 +37,6 @@ stages:
                   command: bash -c "pip install -r requirements.txt && pytest -rsx --durations=10"
                   volumes:
                     - .:/test
-                    - $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml
                   working_dir: /test
               EOF
 
