@@ -46,7 +46,7 @@ jobs:
           docker compose up -d --wait $(docker compose config --services | grep -v "pytest")
 
           # Create the test requirements file from the pyproject.toml file
-          python -c "import tomllib; data = tomllib.load(open('pyproject.toml', 'rb')); deps = data['project']['optional-dependencies']['test']; open('test/requirements.txt', 'w').write('\n'.join(deps))"
+          python -c "import tomllib; data = tomllib.load(open('../pyproject.toml', 'rb')); deps = data['project']['optional-dependencies']['test']; open('requirements.txt', 'w').write('\n'.join(deps))"
 
         workingDirectory: ${{ parameters.workingDirectory }}/test
         displayName: Setup environment
