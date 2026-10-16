@@ -58,13 +58,12 @@ stages:
               containerRegistry: cccstemp
           - script: |
               set -e
-              docker pull cccstemp.azurecr.io/assemblyline-rust-builder:latest
-              (cd assemblyline-filestore; docker compose up -d --wait)
-              docker run -v ${PWD}:/usr/src/ \
-                        --network=host \
-                        cccstemp.azurecr.io/assemblyline-rust-builder:latest \
-                        bash -c 'cd assemblyline-filestore; cargo test --target-dir /out'
-            workingDirectory: $(Pipeline.Workspace)/assemblyline-rust
+              # Start all services except cargo test
+              docker compose up -d --wait $(docker compose config --services | grep -v cargo_test)
+
+              # Run cargo tests
+              docker compose run --build cargo_test
+            workingDirectory: $(Pipeline.Workspace)/assemblyline-rust/assemblyline-filestore
             displayName: Test Filestore
       - job: test_markings
         dependsOn: []
@@ -80,12 +79,11 @@ stages:
               containerRegistry: cccstemp
           - script: |
               set -e
-              docker pull cccstemp.azurecr.io/assemblyline-rust-builder:latest
               docker run -v ${PWD}:/usr/src/ \
-                        --network=host \
-                        cccstemp.azurecr.io/assemblyline-rust-builder:latest \
-                        bash -c 'cd assemblyline-markings; cargo test --target-dir /out'
-            workingDirectory: $(Pipeline.Workspace)/assemblyline-rust
+                        -w /usr/src/ \
+                        rust:1.96-trixie \
+                        bash -c 'cargo test --target-dir /out'
+            workingDirectory: $(Pipeline.Workspace)/assemblyline-rust/assemblyline-markings
             displayName: Test Markings
       - job: test_server
         dependsOn: []
@@ -101,13 +99,12 @@ stages:
               containerRegistry: cccstemp
           - script: |
               set -e
-              docker pull cccstemp.azurecr.io/assemblyline-rust-builder:latest
-              (cd assemblyline-server; docker compose up -d --wait)
-              docker run -v ${PWD}:/usr/src/ \
-                        --network=host \
-                        cccstemp.azurecr.io/assemblyline-rust-builder:latest \
-                        bash -c 'cd assemblyline-server; cargo test --target-dir /out'
-            workingDirectory: $(Pipeline.Workspace)/assemblyline-rust
+              # Start all services except cargo test
+              docker compose up -d --wait $(docker compose config --services | grep -v cargo_test)
+
+              # Run cargo tests
+              docker compose run --build cargo_test
+            workingDirectory: $(Pipeline.Workspace)/assemblyline-rust/assemblyline-server
             displayName: Test Server
       - job: test_environment_template
         dependsOn: []
@@ -123,12 +120,11 @@ stages:
               containerRegistry: cccstemp
           - script: |
               set -e
-              docker pull cccstemp.azurecr.io/assemblyline-rust-builder:latest
               docker run -v ${PWD}:/usr/src/ \
-                        --network=host \
-                        cccstemp.azurecr.io/assemblyline-rust-builder:latest \
-                        bash -c 'cd environment_template; cargo test --target-dir /out'
-            workingDirectory: $(Pipeline.Workspace)/assemblyline-rust
+                        -w /usr/src/ \
+                        rust:1.96-trixie \
+                        bash -c 'cargo test --target-dir /out'
+            workingDirectory: $(Pipeline.Workspace)/assemblyline-rust/environment_template
             displayName: Test Environment Template
       - job: test_redis_objects
         dependsOn: []
@@ -144,13 +140,12 @@ stages:
               containerRegistry: cccstemp
           - script: |
               set -e
-              docker pull cccstemp.azurecr.io/assemblyline-rust-builder:latest
-              (cd redis-objects; docker compose up -d --wait)
-              docker run -v ${PWD}:/usr/src/ \
-                        --network=host \
-                        cccstemp.azurecr.io/assemblyline-rust-builder:latest \
-                        bash -c 'cd redis-objects; cargo test --target-dir /out'
-            workingDirectory: $(Pipeline.Workspace)/assemblyline-rust
+              # Start all services except cargo test
+              docker compose up -d --wait $(docker compose config --services | grep -v cargo_test)
+
+              # Run cargo tests
+              docker compose run --build cargo_test
+            workingDirectory: $(Pipeline.Workspace)/assemblyline-rust/redis-objects
             displayName: Test Redis Objects
       - job: test_rust_service_client
         dependsOn: []
