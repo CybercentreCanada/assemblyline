@@ -28,16 +28,28 @@ stages:
                 al_socketio:
                   build: !reset null
                   image: cccstemp.azurecr.io/assemblyline-socketio:$TAG
+                pytest:
+                  build: !reset null
+                  image: cccstemp.azurecr.io/assemblyline-socketio:$TAG
+                  environment:
+                    CI: "1"
+                  command: "pip install -r requirements.txt; pytest -rsx --durations=10"
+                  volumes:
+                    - .:/test
+                  working_dir: /test
               EOF
 
               # Start all services except pytest
               docker compose -f docker-compose.yml -f override.yml up -d --wait $(docker compose config --services | grep -v "pytest")
+
+              # Create the test requirements file from the pyproject.toml file
+              python -c "import tomllib; data = tomllib.load(open('../pyproject.toml', 'rb')); deps = data['project']['optional-dependencies']['test']; open('requirements.txt', 'w').write('\n'.join(deps))"
+
             workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/test
             displayName: Setup environment
           - script: |
               # Start up pytest service from Docker Compose and run the tests
-              docker compose -f docker-compose.yml -f override.yml run -e CI=1 --build pytest \
-                pytest -rsx --durations=10
+              docker compose -f docker-compose.yml -f override.yml run pytest
             workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/test
             displayName: Test UI
           - script: docker logs al_ui

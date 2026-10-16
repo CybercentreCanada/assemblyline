@@ -14,12 +14,6 @@ parameters:
 jobs:
   - job: test_${{ replace(parameters.imageName, '-', '_') }}
     displayName: Test ${{ parameters.imageName }} Image
-    services:
-          elasticsearch: elasticsearch
-          sftp: sftp
-          redis: redis
-          minio: minio
-          floci: floci
     steps:
       - checkout: none
       - download: current
@@ -33,17 +27,32 @@ jobs:
       - ${{ each step in parameters.additionalSteps }} :
         - ${{ step }}
       - script: |
-          set -exv  # Echo commands before they are run
-          export IMAGE=cccstemp.azurecr.io/${{ parameters.imageName }}
+          # Create an override file for the Docker Compose to replace the pytest service with the specified image
+          cat <<EOF > override.yml
+          services:
+            pytest:
+              build: !reset null
+              image: cccstemp.azurecr.io/${{ parameters.imageName }}:$TAG
+              environment:
+                CI: "1"
+              command: "pip install -r requirements.txt; pytest -rsx --durations=10"
+              volumes:
+                - .:/test
+                - $(Pipeline.Workspace)/working/pipelines/base-config.yaml:/etc/assemblyline/config.yml
+              working_dir: /test
+          EOF
+
+          # Start all services except pytest
+          docker compose up -d --wait $(docker compose config --services | grep -v "pytest")
 
           # Create the test requirements file from the pyproject.toml file
           python -c "import tomllib; data = tomllib.load(open('pyproject.toml', 'rb')); deps = data['project']['optional-dependencies']['test']; open('test/requirements.txt', 'w').write('\n'.join(deps))"
 
-          docker run -v `pwd`/test:/test \
-                      -v $(Pipeline.Workspace)/working/pipelines/base-config.yaml:/etc/assemblyline/config.yml \
-                      -w /test \
-                      --network host \
-                      ${IMAGE}:${TAG} \
-                      /bin/bash -c "pip install -r requirements.txt; CI=1 pytest -rsx --durations=10"
-        workingDirectory: ${{ parameters.workingDirectory }}
+        workingDirectory: ${{ parameters.workingDirectory }}/test
+        displayName: Setup environment
+      - script: |
+          set -exv  # Echo commands before they are run
+          # Start up pytest service from Docker Compose and run the tests
+          docker compose run --build pytest
+        workingDirectory: ${{ parameters.workingDirectory }}/test
         displayName: Run ${{ parameters.imageName }} tests
