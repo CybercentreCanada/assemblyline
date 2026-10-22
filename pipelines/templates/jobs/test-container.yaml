@@ -35,7 +35,7 @@ jobs:
               image: cccstemp.azurecr.io/${{ parameters.imageName }}:$TAG
               environment:
                 CI: "1"
-              command: "pip install -r requirements.txt; pytest -rsx --durations=10"
+              command: bash -c "pip install -r requirements.txt && pytest -rsx --durations=10"
               volumes:
                 - .:/test
                 - $(Pipeline.Workspace)/working/pipelines/base-config.yaml:/etc/assemblyline/config.yml
@@ -53,6 +53,6 @@ jobs:
       - script: |
           set -exv  # Echo commands before they are run
           # Start up pytest service from Docker Compose and run the tests
-          docker compose run --build pytest
+          docker compose run pytest
         workingDirectory: ${{ parameters.workingDirectory }}/test
         displayName: Run ${{ parameters.imageName }} tests
