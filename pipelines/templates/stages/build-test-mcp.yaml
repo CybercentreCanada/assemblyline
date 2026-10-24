@@ -5,10 +5,6 @@ stages:
     jobs:
       - job: build_test_mcp
         timeoutInMinutes: 10
-        services:
-          elasticsearch: elasticsearch
-          redis: redis
-          minio: minio
         displayName: Build & Test MCP Image
         steps:
           - checkout: none
@@ -19,10 +15,6 @@ stages:
             inputs:
               command: login
               containerRegistry: cccstemp
-          - task: UsePythonVersion@0
-            displayName: Set python version
-            inputs:
-              versionSpec: 3.14
           - script: |
               set -e
 
@@ -38,6 +30,8 @@ stages:
             displayName: Build MCP
           - script: |
               set -e
+
+              export IMAGE=cccstemp.azurecr.io/assemblyline-mcp
 
               # Create an override file for the Docker Compose services with the specified images and tags
               cat <<EOF > override.yml
@@ -70,6 +64,8 @@ stages:
             displayName: Setup environment
           - script: |
               set -e
+              export IMAGE=cccstemp.azurecr.io/assemblyline-mcp
+
               # Start up pytest service from Docker Compose and run the tests
               docker compose -f docker-compose.yml -f override.yml run pytest
 
