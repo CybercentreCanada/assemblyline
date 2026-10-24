@@ -9,4 +9,4 @@ RUN apt-get update \
 
 # Install assemblyline dependencies, but don't keep assemblyline
 RUN env "PIP_USE_PEP517=true" pip install --user assemblyline && pip uninstall assemblyline -y
-RUN chmod 750 /root/.local/lib/python3.11/site-packages
+RUN chmod 750 /root/.local/lib/python3.14/site-packages
