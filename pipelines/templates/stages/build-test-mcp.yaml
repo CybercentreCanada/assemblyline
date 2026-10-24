@@ -44,14 +44,6 @@ stages:
                   build: !reset null
                   image: $IMAGE:$TAG
                   command: !reset null
-                pytest:
-                  image: cccstemp.azurecr.io/assemblyline-socketio:$TAG
-                  environment:
-                    CI: "1"
-                  command: bash -c "pip install -r requirements.txt && pytest -rsx --durations=10"
-                  volumes:
-                    - .:/test
-                  working_dir: /test
               EOF
 
               # Start all services except pytest
