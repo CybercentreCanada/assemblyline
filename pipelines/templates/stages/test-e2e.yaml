@@ -37,12 +37,14 @@ stages:
               docker compose exec al_socketio \
                 python -m assemblyline.odm.random_data.create_test_data nosvc nosigs
             displayName: Create Test Data
+            workingDirectory: $(Pipeline.Workspace)/working/e2e
 
           # --- Run Playwright tests ---
           - script: |
               echo "--- Running Playwright E2E Tests ---"
               docker compose run playwright
             displayName: Run Playwright E2E Tests
+            workingDirectory: $(Pipeline.Workspace)/working/e2e
 
           # --- 📸 Publish Playwright screenshots, videos, and traces ---
           - task: PublishPipelineArtifact@1
