@@ -1,0 +1,128 @@
+services:
+  minio:
+    image: cgr.dev/chainguard/minio
+    environment:
+      MINIO_ROOT_USER: al_storage_key
+      MINIO_ROOT_PASSWORD: Ch@ngeTh!sPa33w0rd
+    ports:
+      - "9000:9000"
+    command: server /data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.19.3
+    environment:
+      - xpack.security.enabled=false
+      - discovery.type=single-node
+      - logger.level=WARN
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - ELASTIC_PASSWORD=devpass
+    tmpfs:
+      - /usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl --silent --fail -u elastic:$$ELASTIC_PASSWORD localhost:9200/_cluster/health || exit 1",
+        ]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+
+  redis:
+    image: valkey/valkey:8.1.4
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+
+  nginx:
+    image: cccs/nginx-ssl-frontend
+    environment:
+      TEMPLATE: minimal
+    ports:
+      - "443:443"
+      - "80:80"
+
+  al_ui:
+    image: cccstemp.azurecr.io/assemblyline-ui:$TAG
+    ports:
+      - "5000:5000"
+    volumes:
+      - ${PATH_REWRITE:-.}/config.yaml:/etc/assemblyline/config.yml
+      - ${ROOT_REWRITE:-../pipelines/classification.yaml}:/etc/assemblyline/classification.yml
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import requests; requests.head(\"http://localhost:5000/healthz/live\", timeout=2).raise_for_status()' || exit 1"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    extra_hosts:
+      - "localhost:host-gateway"
+
+  al_socketio:
+    image: cccstemp.azurecr.io/assemblyline-socketio:$TAG
+    volumes:
+      - ${PATH_REWRITE:-.}/config.yaml:/etc/assemblyline/config.yml
+      - ${ROOT_REWRITE:-../pipelines/classification.yaml}:/etc/assemblyline/classification.yml
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import requests; requests.head(\"http://localhost:5002/healthz/live\", timeout=2).raise_for_status()' || exit 1"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    extra_hosts:
+      - "localhost:host-gateway"
+  
+  al_frontend:
+    image: cccstemp.azurecr.io/assemblyline-ui-frontend:$TAG
+    ports:
+      - "3000:3000"
+
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.54.2-jammy
+    working_dir: /app
+    volumes:
+      - "$PIPELINE_WORKSPACE/working/assemblyline-ui-frontend:/app"
+    environment:
+      TEST_SHORT_TIMEOUT: "3000"
+      TEST_MEDIUM_TIMEOUT: "8000"
+      TEST_LONG_TIMEOUT: "60000"
+    command:
+      - /bin/bash
+      - -c
+      - |
+        npm install -g pnpm@10.8.1 &&
+        pnpm install &&
+        npx playwright install chromium firefox webkit &&
+        pnpm run e2e:ci
+    depends_on:
+      al_ui:
+        condition: service_healthy
+      al_socketio:
+        condition: service_healthy
+      al_frontend:
+        condition: service_started
+    network_mode: host
