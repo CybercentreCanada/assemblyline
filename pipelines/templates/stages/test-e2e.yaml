@@ -10,10 +10,6 @@ stages:
     jobs:
       - job: test_e2e
         timeoutInMinutes: 20
-        services:
-          elasticsearch: elasticsearch
-          redis: redis
-          minio: minio
         displayName: Playwright E2E Tests
         steps:
           - checkout: none
@@ -30,82 +26,25 @@ stages:
           - script: |
               set -e
 
-              echo "--- Starting service containers ---"
-
-              docker run -d --name ui --network $(E2E_NETWORK) \
-                -v $(Pipeline.Workspace)/working/pipelines/templates/stages/e2e-config.yaml:/etc/assemblyline/config.yml \
-                -v $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml \
-                --restart on-failure \
-                cccstemp.azurecr.io/assemblyline-ui:$TAG
-
-              docker run -d --name socketsrv --network $(E2E_NETWORK) \
-                -v $(Pipeline.Workspace)/working/pipelines/templates/stages/e2e-config.yaml:/etc/assemblyline/config.yml \
-                -v $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml \
-                --restart on-failure \
-                cccstemp.azurecr.io/assemblyline-socketio:$TAG
-
-              docker run -d --name frontend --network $(E2E_NETWORK) \
-                --restart on-failure \
-                -e "EXTERNAL_IP=$(E2E_DOMAIN)" \
-                cccstemp.azurecr.io/assemblyline-ui-frontend:$TAG
-
-              docker run -d --name nginx --network $(E2E_NETWORK) \
-                --restart on-failure \
-                -e "FRONTEND_HOST=$(E2E_DOMAIN)" \
-                -e "UI_HOST=$(E2E_DOMAIN)" \
-                -e "SOCKET_HOST=$(E2E_DOMAIN)" \
-                -e "TEMPLATE=minimal" \
-                -e "FQDN=$(E2E_DOMAIN)" \
-                -e "ACCESS_LOG=/dev/stdout" \
-                -e "ERROR_LEVEL=info" \
-                cccs/nginx-ssl-frontend
-
-              echo "--- Waiting for backend services ---"
-              wget http://$(E2E_DOMAIN):5000/healthz/ready --retry-on-http-error=502 --retry-on-http-error=503 --waitretry=10 --retry-connrefused
-              wget http://$(E2E_DOMAIN):5002/healthz/ready --retry-on-http-error=502 --retry-on-http-error=503 --waitretry=10 --retry-connrefused
-
-              echo "--- Stabilizing SSL / nginx startup ---"
-              sleep 5
-
-              echo "--- Validating nginx availability ---"
-              wget https://$(E2E_DOMAIN) --no-check-certificate --retry-on-http-error=502 --waitretry=10 --retry-connrefused
-
-              echo "--- Validating /whoami endpoint readiness ---"
-              wget https://$(E2E_DOMAIN)/api/v4/user/whoami/ --no-check-certificate --retry-on-http-error=502 --waitretry=10 --retry-connrefused || true
-
+              echo "--- Starting service containers ---"              
+              docker compose up -d --wait $(docker compose config --services | grep -v "playwright")
             displayName: Start Services
+            workingDirectory: $(Pipeline.Workspace)/working/e2e
 
           # --- Create default test data (users etc.) ---
           - script: |
               echo "--- Creating test data (default users) ---"
-              docker run --rm --network $(E2E_NETWORK) \
-                -v $(Pipeline.Workspace)/working/pipelines/:/etc/assemblyline/ \
-                -v $(Pipeline.Workspace)/working/:/opt/alv4/ \
-                -w /opt/alv4/assemblyline-base/assemblyline/odm/random_data/ \
-                cccs/assemblyline_dev:4.6.1 \
-                python3 create_test_data.py nosvc nosigs
+              docker compose exec al_socketio \
+                python -m assemblyline.odm.random_data.create_test_data nosvc nosigs
             displayName: Create Test Data
+            workingDirectory: $(Pipeline.Workspace)/working/e2e
 
           # --- Run Playwright tests ---
           - script: |
               echo "--- Running Playwright E2E Tests ---"
-              docker run --rm \
-                -v $(Pipeline.Workspace)/working/assemblyline-ui-frontend:/app \
-                -w /app \
-                --network $(E2E_NETWORK) \
-                -e EXTERNAL_IP=$(E2E_DOMAIN) \
-                -e TEST_SHORT_TIMEOUT=3000 \
-                -e TEST_MEDIUM_TIMEOUT=8000 \
-                -e TEST_LONG_TIMEOUT=60000 \
-                mcr.microsoft.com/playwright:v1.54.2-jammy \
-                /bin/bash -c "
-                  npm install -g pnpm@10.8.1 &&
-                  pnpm install &&
-                  npx playwright install chromium firefox webkit &&
-                  pnpm run e2e:ci
-                "
-            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui-frontend
+              docker compose run playwright
             displayName: Run Playwright E2E Tests
+            workingDirectory: $(Pipeline.Workspace)/working/e2e
 
           # --- 📸 Publish Playwright screenshots, videos, and traces ---
           - task: PublishPipelineArtifact@1
