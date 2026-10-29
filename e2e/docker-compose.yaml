@@ -100,7 +100,7 @@ services:
       - "3000:3000"
 
   create_test_data:
-    image: cccs/assemblyline-socketio:$TAG
+    image: cccstemp.azurecr.io/assemblyline-socketio:$TAG
     volumes:
       - ${PATH_REWRITE:-.}/config.yaml:/etc/assemblyline/config.yml
       - ${ROOT_REWRITE:-../pipelines/classification.yaml}:/etc/assemblyline/classification.yml
