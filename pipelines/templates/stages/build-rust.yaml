@@ -21,12 +21,12 @@ stages:
               export VERSION=${VERSION/beta/b}
 
               set +xv
-              docker pull cccstemp.azurecr.io/assemblyline-rust-builder:latest
+              docker pull cccstemp.azurecr.io/assemblyline-rust-builder:$BUILD_TYPE
               export IMAGE=cccstemp.azurecr.io/assemblyline-rust
               docker build --build-arg version=$VERSION \
                            --build-arg version_tag=$TAG \
                            --build-arg tag=$BUILD_TYPE \
-                           --build-arg build_image=cccstemp.azurecr.io/assemblyline-rust-builder:latest \
+                           --build-arg build_image=cccstemp.azurecr.io/assemblyline-rust-builder:$BUILD_TYPE \
                            -t $IMAGE:$TAG \
                            -t $IMAGE:$BUILD_TYPE \
                            -t $IMAGE:$SERIES . -f ./assemblyline-server/Dockerfile | while read line ; do echo "$(date) | $line"; done;
