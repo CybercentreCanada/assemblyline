@@ -161,10 +161,11 @@ stages:
               containerRegistry: cccstemp
           - script: |
               set -e
-              docker pull cccstemp.azurecr.io/assemblyline-rust-builder:latest
+              export RUST_BASE=cccstemp.azurecr.io/assemblyline-rust-builder:$BUILD_TYPE
+              docker pull $RUST_BASE
               docker run -v ${PWD}:/usr/src/ \
                         --network=host \
-                        cccstemp.azurecr.io/assemblyline-rust-builder:latest \
+                        $RUST_BASE \
                         bash -c 'cd assemblyline-service-client; cargo test --target-dir /out'
             workingDirectory: $(Pipeline.Workspace)/assemblyline-rust
             displayName: Test Service Client

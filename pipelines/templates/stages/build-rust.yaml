@@ -17,15 +17,15 @@ stages:
           - script: |
               set -exv  # Echo commands before they are run
               export VERSION=${VERSION/stable}
-              export RUST_BASE=cccstemp.azurecr.io/assemblyline-rust-builder:latest
+              export RUST_BASE=cccstemp.azurecr.io/assemblyline-rust-builder:$BUILD_TYPE
               export IMAGE=cccstemp.azurecr.io/assemblyline-rust
 
               set +xv
-              docker pull $RUST_BASE:$BUILD_TYPE
+              docker pull $RUST_BASE
               docker build --build-arg version=$VERSION \
                            --build-arg version_tag=$TAG \
                            --build-arg tag=$BUILD_TYPE \
-                           --build-arg build_image=$RUST_BASE:$BUILD_TYPE \
+                           --build-arg build_image=$RUST_BASE \
                            -t $IMAGE:$TAG \
                            -t $IMAGE:$BUILD_TYPE \
                            -t $IMAGE:$SERIES . -f ./assemblyline-server/docker/Dockerfile | while read line ; do echo "$(date) | $line"; done;
@@ -56,7 +56,7 @@ stages:
               export VERSION=${VERSION/beta/b}
 
               export BASE=cccstemp.azurecr.io/assemblyline
-              export RUST_BASE=cccstemp.azurecr.io/assemblyline-rust-builder:latest
+              export RUST_BASE=cccstemp.azurecr.io/assemblyline-rust-builder:$BUILD_TYPE
               export IMAGE=cccstemp.azurecr.io/assemblyline-rust-service-base
 
               mv ../working/dist/ dist
