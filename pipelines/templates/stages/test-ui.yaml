@@ -1,15 +1,10 @@
 stages:
   - stage: test_ui
     displayName: Test UI
-    dependsOn: [build_ui, build_frontend]
+    dependsOn: [build_ui]
     jobs:
       - job: test_ui
         timeoutInMinutes: 10
-        services:
-          elasticsearch: elasticsearch
-          redis: redis
-          minio: minio
-          openldap: openldap
         displayName: Test UI Image
         steps:
           - checkout: none
@@ -23,38 +18,50 @@ stages:
           - script: |
               set -e
 
-              # Start up a KeyCloak instance for OAuth testing
+              # Create an override file for the Docker Compose services with the specified images and tags
+              cat <<EOF > override.yml
+              services:
+                al_ui:
+                  build: !reset null
+                  image: cccstemp.azurecr.io/assemblyline-ui:$TAG
+                  command: !reset null
+                al_socketio:
+                  build: !reset null
+                  image: cccstemp.azurecr.io/assemblyline-socketio:$TAG
+                  command: !reset null
+                pytest:
+                  build: !reset null
+                  image: cccstemp.azurecr.io/assemblyline-socketio:$TAG
+                  environment:
+                    CI: "1"
+                  command: bash -c "pip install -r requirements.txt && pytest -rsx --durations=10"
+                  volumes:
+                    - .:/test
+                  working_dir: /test
+              EOF
 
-              docker run -d --name keycloak -e KC_HEALTH_ENABLED=true -v "$(Pipeline.Workspace)/working/pipelines/keycloak-realm.json:/opt/keycloak/data/import/realm.json:ro" -p 8080:8080 --health-cmd="bash -c \"{ printf 'HEAD /health/ready HTTP/1.0\r\n\r\n' >&0; grep 'HTTP/1.0 200'; } 0<>/dev/tcp/localhost/9000\"" --health-interval=5s --health-timeout=5s --health-retries=3 --health-start-period=10s quay.io/keycloak/keycloak:26.7 start-dev --import-realm
+              # Start all services except pytest
+              docker compose -f docker-compose.yml -f override.yml up -d --wait $(docker compose config --services | grep -v "pytest")
 
-              docker run -d --name ui --network host -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml -v $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml --restart on-failure cccstemp.azurecr.io/assemblyline-ui:$TAG &
-              docker run -d --name socketsrv --network host -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml -v $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml --restart on-failure cccstemp.azurecr.io/assemblyline-socketio:$TAG &
-              docker run -d --name frontend --network host --restart on-failure cccstemp.azurecr.io/assemblyline-ui-frontend:$TAG &
-              docker run -d --name nginx --network host --restart on-failure -e "FRONTEND_HOST=127.0.0.1" -e "UI_HOST=127.0.0.1" -e "SOCKET_HOST=127.0.0.1" -e "TEMPLATE=minimal" -e "FQDN=localhost" -e "ACCESS_LOG=/dev/stdout" -e "ERROR_LEVEL=info" cccs/nginx-ssl-frontend &
-              wait
+              # Create the test requirements file from the pyproject.toml file
+              python -c "import tomllib; data = tomllib.load(open('../pyproject.toml', 'rb')); deps = data['project']['optional-dependencies']['test']; open('requirements.txt', 'w').write('\n'.join(deps))"
 
-              wget http://localhost:5000/healthz/ready --timeout=2 --retry-on-http-error=502 --retry-on-http-error=503 --waitretry=10 --retry-connrefused
-              wget http://localhost:5002/healthz/ready --timeout=2 --retry-on-http-error=502 --retry-on-http-error=503 --waitretry=10 --retry-connrefused
-              wget https://localhost --no-check-certificate --timeout=2 --retry-on-http-error=502 --waitretry=10 --retry-connrefused
-
-              docker run -v `pwd`/test:/test \
-                          -v $(Pipeline.Workspace)/working/pipelines/ui-config.yaml:/etc/assemblyline/config.yml \
-                          -v $(Pipeline.Workspace)/working/pipelines/classification.yaml:/etc/assemblyline/classification.yml \
-                          -w /test \
-                          --network host \
-                          cccstemp.azurecr.io/assemblyline-socketio:${TAG} \
-                          /bin/bash -c "pip install -r requirements.txt; CI=1 pytest -rsx --durations=10"
-            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui
+            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/test
+            displayName: Setup environment
+          - script: |
+              # Start up pytest service from Docker Compose and run the tests
+              docker compose -f docker-compose.yml -f override.yml run pytest
+            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/test
             displayName: Test UI
-          - script: docker logs ui
+          - script: docker compose logs al_ui
             condition: failed()
             displayName: UI Logs
-          - script: docker logs socketsrv
+            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/test
+          - script: docker compose logs al_socketio
             condition: failed()
             displayName: SocketIO Logs
-          - script: docker logs frontend
-            condition: failed()
-            displayName: Frontend Logs
-          - script: docker logs nginx
+            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/test
+          - script: docker compose logs nginx
             condition: failed()
             displayName: NGINX Logs
+            workingDirectory: $(Pipeline.Workspace)/working/assemblyline-ui/test

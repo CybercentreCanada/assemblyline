@@ -15,18 +15,22 @@ stages:
               command: login
               containerRegistry: cccstemp
           - script: |
+              echo "Cleaning up disk..."
+              sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/.ghcup
+            displayName: Free agent disk space
+          - script: |
               set -exv  # Echo commands before they are run
 
               export VERSION=${VERSION/stable}
               export VERSION=${VERSION/beta/b}
 
               set +xv
-              docker pull cccstemp.azurecr.io/assemblyline-rust-builder:latest
+              docker pull cccstemp.azurecr.io/assemblyline-rust-builder:$BUILD_TYPE
               export IMAGE=cccstemp.azurecr.io/assemblyline-rust
               docker build --build-arg version=$VERSION \
                            --build-arg version_tag=$TAG \
                            --build-arg tag=$BUILD_TYPE \
-                           --build-arg build_image=cccstemp.azurecr.io/assemblyline-rust-builder:latest \
+                           --build-arg build_image=cccstemp.azurecr.io/assemblyline-rust-builder:$BUILD_TYPE \
                            -t $IMAGE:$TAG \
                            -t $IMAGE:$BUILD_TYPE \
                            -t $IMAGE:$SERIES . -f ./assemblyline-server/Dockerfile | while read line ; do echo "$(date) | $line"; done;

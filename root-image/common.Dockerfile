@@ -1,12 +1,12 @@
-FROM python:3.11-slim-bookworm AS base
+FROM python:3.14-slim-trixie AS base
 
 # Upgrade dist packages
 RUN apt-get update && apt-get -yy upgrade && rm -rf /var/lib/apt/lists/*
 
 # Get required apt packages
 RUN apt-get update \
-  && apt-get install -yy libffi8 libfuzzy2 libmagic1 git\
+  && apt-get install -yy libmagic1 git\
   && rm -rf /var/lib/apt/lists/*
 
 # Update setuptools package
-RUN pip install -U setuptools==81.0.0 pip
+RUN pip install -U setuptools pip

@@ -7,7 +7,7 @@ trigger:
     include: ["v*"]
   branches:
     exclude:
-      - "main"    
+      - "main"
 pr: none
 
 pool:
@@ -30,55 +30,6 @@ variables:
     PUSH_TAGS: false
 
 resources:
-  containers:
-    - container: redis
-      image: redis
-      ports:
-        - 6379:6379
-    - container: sftp
-      image: linuxserver/openssh-server
-      env:
-        SUDO_ACCESS: "false"
-        PASSWORD_ACCESS: "true"
-        USER_PASSWORD: "password"
-        USER_NAME: "user"
-        LOG_STDOUT: "true"
-      ports:
-        - 2222:2222
-    - container: elasticsearch
-      image: docker.elastic.co/elasticsearch/elasticsearch:8.19.3
-      env:
-        xpack.security.enabled: true
-        discovery.type: single-node
-        ES_JAVA_OPTS: "-Xms512m -Xmx512m"
-        ELASTIC_PASSWORD: devpass
-      ports:
-        - 9200:9200
-      options: '--tmpfs /usr/share/elasticsearch/data'
-    - container: minio
-      image: cccs/minio
-      env:
-        MINIO_ACCESS_KEY: al_storage_key
-        MINIO_SECRET_KEY: Ch@ngeTh!sPa33w0rd
-      ports:
-        - 9000:9000
-    - container: openldap
-      image: docker.io/bitnamilegacy/openldap:2.6
-      env:
-        LDAP_PORT_NUMBER: 389
-        LDAP_ROOT: dc=assemblyline,dc=local
-        LDAP_ADMIN_PASSWORD: admin
-        LDAP_USERS: ldap_user
-        LDAP_PASSWORDS: ldap_password
-        LDAP_USER_OU: people
-      ports:
-        - 389:389
-    - container: floci
-      image: floci/floci:2.0.0
-      env:
-        FLOCI_SERVICES_IAM_ENFORCEMENT_ENABLED: "true"
-      ports:
-        - 4566:4566
   repositories:
   - repository: BuildRepo
     type: github
@@ -205,7 +156,7 @@ stages:
       component: assemblyline-core
       dependsOn: [build_core]
 
-  - template: templates/stages/test-ui.yaml  
+  - template: templates/stages/test-ui.yaml
 
   - template: templates/stages/test-e2e.yaml
 
@@ -233,7 +184,7 @@ stages:
           - task: UsePythonVersion@0
             displayName: Set python version
             inputs:
-              versionSpec: 3.11
+              versionSpec: 3.14
           - script: |
               set -exv  # Echo commands before they are run
               sudo env "PATH=$PATH" "PIP_USE_PEP517=true" python -m pip install --no-cache-dir -U packaging twine

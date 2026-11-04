@@ -20,7 +20,7 @@ steps:
   - task: UsePythonVersion@0
     displayName: Set python version
     inputs:
-      versionSpec: "3.11"
+      versionSpec: "3.14"
     condition: and(succeeded(), eq(variables.publish, true))
 
   - bash: pip install httpx
