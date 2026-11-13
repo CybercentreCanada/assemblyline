@@ -45,6 +45,16 @@ Documentation: https://cybercentrecanada.github.io/assemblyline4_docs/fr/
         </tr>
         <tr>
             <td>
+                Assemblyline Toolbox
+            </td>
+            <td>N/A</td>
+            <td>N/A</td>
+            <td>
+                <a href="https://pypi.org/project/assemblyline-toolbox/#history"><img src="https://img.shields.io/pypi/v/assemblyline-toolbox.svg" alt="Latest Stable Release"></a>
+            </td>
+        </tr>
+        <tr>
+            <td>
                 <a href="https://github.com/CybercentreCanada/assemblyline-base/">Assemblyline Base</a>
             </td>
             <td>
