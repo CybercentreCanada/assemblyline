@@ -41,7 +41,17 @@ Documentation: https://cybercentrecanada.github.io/assemblyline4_docs/fr/
             <th>Repository Name</th>
             <th>Main Branch</th>
             <th>Dev Branch</th>
-            <th>PyPI Release</th>
+            <th>PyPI/Crates Release</th>
+        </tr>
+        <tr>
+            <td>
+                Assemblyline Toolbox
+            </td>
+            <td>N/A</td>
+            <td>N/A</td>
+            <td>
+                <a href="https://pypi.org/project/assemblyline-toolbox/#history"><img src="https://img.shields.io/pypi/v/assemblyline-toolbox.svg" alt="Latest Stable Release"></a>
+            </td>
         </tr>
         <tr>
             <td>
@@ -73,6 +83,25 @@ Documentation: https://cybercentrecanada.github.io/assemblyline4_docs/fr/
         </tr>
         <tr>
             <td>
+                <a href="https://github.com/CybercentreCanada/assemblyline-rust/">Assemblyline Rust</a>
+            </td>
+            <td>
+                <a href="https://dev.azure.com/CybercentreCanada/Assemblyline/_build/latest?definitionId=266&repoName=CybercentreCanada%2Fassemblyline-rust&branchName=main"><img src="https://dev.azure.com/CybercentreCanada/Assemblyline/_apis/build/status%2Ftest%20-%20core%20components%2Fassemblyline-rust?repoName=CybercentreCanada%2Fassemblyline-rust&branchName=main" alt="Main Branch Test Status"></a>
+            </td>
+            <td>
+                <a href="https://dev.azure.com/CybercentreCanada/Assemblyline/_build/latest?definitionId=266&repoName=CybercentreCanada%2Fassemblyline-rust&branchName=dev"><img src="https://dev.azure.com/CybercentreCanada/Assemblyline/_apis/build/status%2Ftest%20-%20core%20components%2Fassemblyline-rust?repoName=CybercentreCanada%2Fassemblyline-base&branchName=dev" alt="Dev Branch Test Status"></a>
+            </td>
+            <td>
+                <div><a href="https://crates.io/crates/assemblyline-server/versions"><img src="https://img.shields.io/crates/v/assemblyline-server?label=assemblyline-server" alt="Latest Stable Release"></a></div>
+                <div><a href="https://crates.io/crates/assemblyline-client/versions"><img src="https://img.shields.io/crates/v/assemblyline-client?label=assemblyline-client" alt="Latest Stable Release"></a></div>
+                <div><a href="https://crates.io/crates/assemblyline-filestore/versions"><img src="https://img.shields.io/crates/v/assemblyline-filestore?label=assemblyline-filestore" alt="Latest Stable Release"></a></div>
+                <div><a href="https://crates.io/crates/assemblyline-models/versions"><img src="https://img.shields.io/crates/v/assemblyline-models?label=assemblyline-models" alt="Latest Stable Release"></a></div>
+                <div><a href="https://crates.io/crates/assemblyline-markings/versions"><img src="https://img.shields.io/crates/v/assemblyline-markings?label=assemblyline-markings" alt="Latest Stable Release"></a></div>
+                <div><a href="https://crates.io/crates/redis-objects/versions"><img src="https://img.shields.io/crates/v/redis-objects?label=redis-objects" alt="Latest Stable Release"></a></div>
+            </td>
+        </tr>
+        <tr>
+            <td>
                 <a href="https://github.com/CybercentreCanada/assemblyline-service-client/">Assemblyline Service Client</a>
             </td>
             <td>
@@ -97,6 +126,20 @@ Documentation: https://cybercentrecanada.github.io/assemblyline4_docs/fr/
             </td>
             <td>
                 <a href="https://pypi.org/project/assemblyline-ui/#history"><img src="https://img.shields.io/pypi/v/assemblyline-ui.svg" alt="Latest Stable Release"></a>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <a href="https://github.com/CybercentreCanada/assemblyline-mcp">Assemblyline MCP</a>
+            </td>
+            <td>
+                <a href="https://dev.azure.com/CybercentreCanada/Assemblyline/_build/latest?definitionId=278&repoName=CybercentreCanada%2Fassemblyline-mcp&branchName=main"><img src="https://dev.azure.com/CybercentreCanada/Assemblyline/_apis/build/status%2Ftest%20-%20core%20components%2Fassemblyline-mcp?repoName=CybercentreCanada%2Fassemblyline-mcp&branchName=main" alt="Main Branch Test Status"></a>
+            </td>
+            <td>
+                <a href="https://dev.azure.com/CybercentreCanada/Assemblyline/_build/latest?definitionId=278&repoName=CybercentreCanada%2Fassemblyline-mcp&branchName=dev"><img src="https://dev.azure.com/CybercentreCanada/Assemblyline/_apis/build/status%2Ftest%20-%20core%20components%2Fassemblyline-mcp?repoName=CybercentreCanada%2Fassemblyline-mcp&branchName=dev" alt="Dev Branch Test Status"></a>
+            </td>
+            <td>
+                N/A
             </td>
         </tr>
         <tr>
