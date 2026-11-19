@@ -14,12 +14,7 @@ stages:
             inputs:
               command: login
               containerRegistry: cccstemp
-          - script: |
-              df -h /
-              sudo mkdir /usr/local/.trash
-              sudo mv /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/.trash/ 2>/dev/null || true
-              sudo nohup rm -rf /usr/local/.trash >/dev/null 2>&1 &
-            displayName: Free agent disk space
+          - template: ../steps/init-agent.yaml
           - script: |
               set -exv  # Echo commands before they are run
 
