@@ -1,0 +1,9 @@
+# Steps for initializing the agent in Azure Pipelines
+
+steps:
+  - script: |
+      df -h /
+      sudo mkdir /usr/local/.trash
+      sudo mv /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/.trash/ 2>/dev/null || true
+      sudo nohup rm -rf /usr/local/.trash >/dev/null 2>&1 &
+    displayName: Free agent disk space

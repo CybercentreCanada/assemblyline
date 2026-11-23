@@ -14,10 +14,7 @@ stages:
             inputs:
               command: login
               containerRegistry: cccstemp
-          - script: |
-              echo "Cleaning up disk..."
-              sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/.ghcup
-            displayName: Free agent disk space
+          - template: ../steps/init-agent.yaml
           - script: |
               set -exv  # Echo commands before they are run
 

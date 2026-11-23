@@ -21,6 +21,7 @@ stages:
             inputs:
               command: login
               containerRegistry: cccstemp
+          - template: ../steps/init-agent.yaml
 
           # --- Start service containers ---
           - script: |

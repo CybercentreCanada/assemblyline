@@ -56,10 +56,7 @@ stages:
             inputs:
               command: login
               containerRegistry: cccstemp
-          - script: |
-              echo "Cleaning up disk..."
-              sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/.ghcup
-            displayName: Free agent disk space
+          - template: ../steps/init-agent.yaml
           - script: |
               set -e
               # Start all services except cargo test
@@ -101,10 +98,7 @@ stages:
             inputs:
               command: login
               containerRegistry: cccstemp
-          - script: |
-              echo "Cleaning up disk..."
-              sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/.ghcup
-            displayName: Free agent disk space
+          - template: ../steps/init-agent.yaml
           - script: |
               set -e
               # Start all services except cargo test
