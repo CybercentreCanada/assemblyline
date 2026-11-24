@@ -45,9 +45,9 @@ Documentation: https://cybercentrecanada.github.io/assemblyline4_docs/fr/
         </tr>
         <tr>
             <td>
-                Assemblyline Toolbox
+                <a href="https://github.com/CybercentreCanada/assemblyline-toolbox">Assemblyline Toolbox</a>
             </td>
-            <td>N/A</td>
+            <td><a href="https://github.com/CybercentreCanada/assemblyline-toolbox/actions/workflows/CI.yml"><img src="https://github.com/CybercentreCanada/assemblyline-toolbox/actions/workflows/CI.yml/badge.svg"></td></a>
             <td>N/A</td>
             <td>
                 <a href="https://pypi.org/project/assemblyline-toolbox/#history"><img src="https://img.shields.io/pypi/v/assemblyline-toolbox.svg" alt="Latest Stable Release"></a>
